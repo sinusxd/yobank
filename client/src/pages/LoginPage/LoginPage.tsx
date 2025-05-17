@@ -7,7 +7,6 @@ import bankLogo from './bank.gif';
 import mailLogo from './mail.png';
 import telegramLogo from "./telegram.png"
 import {Link} from "@/components/Link/Link.tsx";
-import '@telegram-apps/telegram-ui/dist/styles.css';
 
 export const LoginPage: FC = () => {
 

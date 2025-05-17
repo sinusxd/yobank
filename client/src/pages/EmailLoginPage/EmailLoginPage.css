@@ -1,0 +1,33 @@
+.email-login-page__placeholder {
+    margin-bottom: 24px;
+}
+
+.email-login-page__input {
+    margin-bottom: 16px;
+}
+
+.email-login-page__button {
+    margin-top: 8px;
+}
+
+.email-login-page__pin-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.email-login-page__pin-input--shake {
+    animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+    0%,100% { transform: translateX(0); }
+    10%,30%,50%,70%,90% { transform: translateX(-12px); }
+    20%,40%,60%,80% { transform: translateX(12px); }
+}
+
+.email-login-page__error {
+    color: red;
+    text-align: center;
+    margin-top: 16px;
+}
