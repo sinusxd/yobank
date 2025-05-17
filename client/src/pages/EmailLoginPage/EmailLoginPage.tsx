@@ -4,20 +4,21 @@ import { bem } from '@/css/bem';
 import AuthService from '@/api/services/telegramAuthService';
 import './EmailLoginPage.css';
 import {EmailCodeRequest} from "@/api/models/request/emailCodeRequest.ts";
-import {VerifyCodeResponse} from "@/api/models/response/verifyCodeResponse.ts";
 import {VerifyCodeRequest} from "@/api/models/request/verifyCodeRequest.ts";
+import {VerifyCodeResponse} from "@/api/models/response/verifyCodeResponse.ts";
 import {Page} from "@/components/Page.tsx";
 
 const [, e] = bem('email-login-page');
 
 export const EmailLoginPage: FC = () => {
-    const [step, setStep] = useState<'email' | 'code'>('email');
+    const [step, setStep]   = useState<'email' | 'code'>('code');
     const [email, setEmail] = useState('');
-    const [code, setCode] = useState<number[]>([]);
+    const [code, setCode]   = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [shake, setShake] = useState(false);
-    const first = useRef(true);
+    const [error, setError]     = useState('');
+    const [shake, setShake]     = useState(false);
+    const [pinKey, setPinKey]   = useState(0);   // меняем → PinInput монтируется заново
+    const skipFirst = useRef(true);
 
     const requestCode = async () => {
         setLoading(true);
@@ -25,8 +26,6 @@ export const EmailLoginPage: FC = () => {
         try {
             await AuthService.requestCode({ email } as EmailCodeRequest);
             setStep('code');
-        } catch (e: any) {
-            setError(e?.response?.data?.message || e.message || 'Ошибка отправки кода');
         } finally {
             setLoading(false);
         }
@@ -36,17 +35,22 @@ export const EmailLoginPage: FC = () => {
         setLoading(true);
         setError('');
         try {
-            const { data } = await AuthService.verifyCode({ email, code: code.join('') } as VerifyCodeRequest);
+            const { data } = await AuthService.verifyCode(
+                { email, code: code.join('') } as VerifyCodeRequest,
+            );
             const { access_token, refresh_token }: VerifyCodeResponse = data;
-            sessionStorage.setItem('access_token', access_token || '');
+            sessionStorage.setItem('access_token',  access_token  || '');
             sessionStorage.setItem('refresh_token', refresh_token || '');
         } catch {
             setError('Неверный или просроченный код');
             setShake(true);
             if ('vibrate' in navigator) navigator.vibrate(200);
+
             setTimeout(() => {
                 setShake(false);
-                setCode([]);
+                skipFirst.current = true; // заглушаем первый onChange нового инпута
+                setCode([]);             // state-очистка
+                setPinKey(k => k + 1);   // 🍰 размонтируем старый PinInput
             }, 600);
         } finally {
             setLoading(false);
@@ -83,30 +87,28 @@ export const EmailLoginPage: FC = () => {
                     >
                         Получить код
                     </Button>
-                    {error && <p className={e('error')}>{error}</p>}
+                    {error && step === 'email' && <p className={e('error')}>{error}</p>}
                 </Section>
             )}
 
             {step === 'code' && (
-                <Section className={e('pin-section')}>
-                    <Placeholder
-                        header="Введите код"
-                        description={`На ${email} отправлен код`}
-                    />
+                <Section>
                     <PinInput
+                        label={'Введите код'}
+                        key={pinKey}                       // ← ключ заставляет React создать новый PinInput
                         className={e('pin-input', { shake })}
                         pinCount={6}
                         value={code}
                         onChange={vals => {
-                            if (first.current) {
-                                first.current = false;
+                            if (skipFirst.current) {        // игнорируем служебный вызов после маунта
+                                skipFirst.current = false;
                                 return;
                             }
-                            setCode(vals);
+                            setCode(vals as number[]);
                             if (error) setError('');
                         }}
                     />
-                    {error && <p className={e('error')}>{error}</p>}
+                    {error && step === 'code' && <p className={e('error')}>{error}</p>}
                 </Section>
             )}
         </Page>
