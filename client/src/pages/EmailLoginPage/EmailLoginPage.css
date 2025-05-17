@@ -16,12 +16,12 @@
     align-items: center;
 }
 .email-login-page__pin-input--shake label {
-    border-color: red;
+    border-color: var(--tgui--destructive_text_color);
 }
 
-@supports (-webkit-hyphens: none) and (text-size-adjust: none)
-.email-login-page__pin-input label {
-    background: red;
+body.ios .email-login-page__pin-input--shake label,
+body.macos .email-login-page__pin-input--shake label {
+    background: var(--tgui--destructive_text_color);
 }
 
 .email-login-page__pin-input--shake > header > div {

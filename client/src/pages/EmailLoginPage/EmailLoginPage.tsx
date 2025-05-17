@@ -3,10 +3,11 @@ import { Section, Placeholder, Button, Input, PinInput } from '@telegram-apps/te
 import { bem } from '@/css/bem';
 import AuthService from '@/api/services/telegramAuthService';
 import './EmailLoginPage.css';
-import {EmailCodeRequest} from "@/api/models/request/emailCodeRequest.ts";
-import {VerifyCodeRequest} from "@/api/models/request/verifyCodeRequest.ts";
-import {VerifyCodeResponse} from "@/api/models/response/verifyCodeResponse.ts";
-import {Page} from "@/components/Page.tsx";
+import { EmailCodeRequest } from "@/api/models/request/emailCodeRequest.ts";
+import { VerifyCodeRequest } from "@/api/models/request/verifyCodeRequest.ts";
+import { VerifyCodeResponse } from "@/api/models/response/verifyCodeResponse.ts";
+import { Page } from "@/components/Page.tsx";
+import {retrieveLaunchParams} from "@telegram-apps/sdk-react";
 
 const [, e] = bem('email-login-page');
 
@@ -17,8 +18,19 @@ export const EmailLoginPage: FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError]     = useState('');
     const [shake, setShake]     = useState(false);
-    const [pinKey, setPinKey]   = useState(0);   // меняем → PinInput монтируется заново
+    const [pinKey, setPinKey]   = useState(0);
     const skipFirst = useRef(true);
+
+    const launchParams = retrieveLaunchParams();
+    const { tgWebAppPlatform: platform } = launchParams;
+
+    useEffect(() => {
+        if (platform === 'ios') {
+            document.body.classList.add('ios');
+        } else if (platform === 'macos') {
+            document.body.classList.add('macos');
+        }
+    }, [platform]);
 
     const requestCode = async () => {
         setLoading(true);
@@ -45,12 +57,11 @@ export const EmailLoginPage: FC = () => {
             setError('Неверный или просроченный код');
             setShake(true);
             if ('vibrate' in navigator) navigator.vibrate(200);
-
             setTimeout(() => {
                 setShake(false);
-                skipFirst.current = true; // заглушаем первый onChange нового инпута
-                setCode([]);             // state-очистка
-                setPinKey(k => k + 1);   // 🍰 размонтируем старый PinInput
+                skipFirst.current = true;
+                setCode([]);
+                setPinKey(k => k + 1);
             }, 600);
         } finally {
             setLoading(false);
@@ -94,13 +105,13 @@ export const EmailLoginPage: FC = () => {
             {step === 'code' && (
                 <Section>
                     <PinInput
-                        label={'Введите код'}
-                        key={pinKey}                       // ← ключ заставляет React создать новый PinInput
+                        label="Введите код"
+                        key={pinKey}
                         className={e('pin-input', { shake })}
                         pinCount={6}
                         value={code}
                         onChange={vals => {
-                            if (skipFirst.current) {        // игнорируем служебный вызов после маунта
+                            if (skipFirst.current) {
                                 skipFirst.current = false;
                                 return;
                             }
