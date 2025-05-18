@@ -1,17 +1,19 @@
 package route
 
 import (
-	"github.com/gin-gonic/gin"
 	"yobank/api/controller"
 	"yobank/bootstrap"
 	"yobank/domain"
+
+	"github.com/gin-gonic/gin"
 )
 
-func NewEmailLoginRouter(loginService domain.LoginService, codeService domain.EmailCodeService, userRepo domain.UserRepository, env *bootstrap.Env, group *gin.RouterGroup) {
+func NewEmailLoginRouter(userRepo domain.UserRepository, loginService domain.LoginService, codeService domain.EmailCodeService, walletService domain.WalletService, env *bootstrap.Env, group *gin.RouterGroup) {
 	lc := &controller.EmailLoginController{
+		UserRepository: userRepo,
 		LoginService:   loginService,
 		CodeService:    codeService,
-		UserRepository: userRepo,
+		WalletService:  walletService,
 		Env:            env,
 	}
 	group.POST("/auth/email/request-code", lc.RequestCode)

@@ -1,0 +1,19 @@
+package route
+
+import (
+	"yobank/api/controller"
+	"yobank/domain"
+
+	"github.com/gin-gonic/gin"
+)
+
+func NewWalletRouter(walletService domain.WalletService, authGroup *gin.RouterGroup) {
+	wc := &controller.WalletController{
+		WalletService: walletService,
+	}
+
+	// Маршруты для работы с кошельком (требуют авторизации)
+	authGroup.GET("/wallet", wc.GetUserWallet)
+	authGroup.POST("/wallet", wc.CreateWallet)
+	authGroup.POST("/wallet/init", wc.InitWallet)
+}

@@ -8,7 +8,6 @@ import { retrieveLaunchParams } from '@telegram-apps/sdk-react';
 import { Root } from '@/components/Root.tsx';
 import { EnvUnsupported } from '@/components/EnvUnsupported.tsx';
 import { init } from '@/init.ts';
-
 import './index.css';
 
 // Mock the environment in case, we are outside Telegram.

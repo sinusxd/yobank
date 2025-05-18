@@ -13,10 +13,10 @@ export const BankPage: FC = () => {
     const [activeTab, setActiveTab] = useState("wallet");
 
     return (
-        <Page back={false}>
+        <Page back>
             {/* Здесь можно рендерить разный контент по activeTab */}
             <Money/>
-            <Tabbar style={{ paddingBottom: "25px" }}>
+            <Tabbar style={{ paddingBottom: "20px" }}>
                 {[
                     <Tabbar.Item
                         key="wallet"

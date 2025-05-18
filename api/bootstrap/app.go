@@ -7,8 +7,9 @@ import (
 )
 
 type Application struct {
-	Env *Env
-	DB  *gorm.DB
+	Env       *Env
+	DB        *gorm.DB
+	Container Container
 }
 
 func App() Application {
@@ -21,6 +22,9 @@ func App() Application {
 		log.Fatal("PostgreSQL init error: ", err)
 	}
 	app.DB = db
+
+	container := BuildContainer(app.DB, app.Env)
+	app.Container = container
 
 	return *app
 }

@@ -1,18 +1,20 @@
 package controller
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
 	"yobank/bootstrap"
 	"yobank/domain"
 	"yobank/internal/telegram"
+
+	"github.com/gin-gonic/gin"
 )
 
 type EmailLoginController struct {
 	LoginService   domain.LoginService
 	CodeService    domain.EmailCodeService
 	UserRepository domain.UserRepository
+	WalletService  domain.WalletService
 	Env            *bootstrap.Env
 }
 
@@ -55,11 +57,22 @@ func (lc *EmailLoginController) VerifyCode(c *gin.Context) {
 	user, err := lc.LoginService.GetUserByEmail(c, req.Email)
 	if err != nil {
 		// пользователь не найден — создаём
-		user = domain.User{Email: req.Email, Username: req.Email}
+		user = domain.User{Email: &req.Email, Username: req.Email}
 		if err := lc.UserRepository.Create(c.Request.Context(), &user); err != nil {
 			c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Не удалось создать пользователя"})
 			return
 		}
+	}
+
+	// Создаем кошелек для пользователя, если его нет
+	if lc.WalletService != nil {
+		wallet, err := lc.WalletService.InitWalletIfNotExists(c.Request.Context(), user.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Ошибка при инициализации кошелька"})
+			return
+		}
+		// Можно добавить информацию о созданном кошельке в ответ, если нужно
+		_ = wallet
 	}
 
 	accessToken, err := lc.LoginService.CreateAccessToken(&user, lc.Env.AccessTokenSecret, lc.Env.AccessTokenExpiryHour)

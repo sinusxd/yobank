@@ -42,7 +42,7 @@ func (sc *SignupController) Signup(c *gin.Context) {
 
 	user := domain.User{
 		Username: request.Name,
-		Email:    request.Email,
+		Email:    &request.Email,
 	}
 
 	err = sc.SignupUsecase.Create(c, &user)

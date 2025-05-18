@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"gorm.io/gorm"
 	"time"
 
 	"yobank/domain"
@@ -12,11 +13,16 @@ import (
 type Services struct {
 	Login     domain.LoginService
 	EmailCode domain.EmailCodeService
+	Wallet    domain.WalletService
+	User      domain.UserService
+	Rate      domain.RateService
 }
 
 type Repositories struct {
 	User      domain.UserRepository
 	EmailCode domain.EmailCodeRepository
+	Wallet    domain.WalletRepository
+	Rate      domain.RateRepository
 }
 
 type Container struct {
@@ -24,13 +30,13 @@ type Container struct {
 	Repos    Repositories
 }
 
-func BuildContainer(app Application) Container {
+func BuildContainer(db *gorm.DB, cfg *Env) Container {
 	timeout := 5 * time.Second
-	db := app.DB
-	cfg := app.Env
 
 	userRepo := repository.NewUserRepository(db)
 	emailCodeRepo := repository.NewEmailCodeRepository(db)
+	walletRepo := repository.NewWalletRepository(db)
+	rateRepo := repository.NewRateRepository(db)
 
 	// Mailer
 	mail := mailer.NewGoMailer(
@@ -44,15 +50,23 @@ func BuildContainer(app Application) Container {
 	// UseCases / Services
 	emailCodeService := service.NewEmailCodeService(emailCodeRepo, mail, timeout)
 	loginService := service.NewLoginService(userRepo, timeout)
+	walletService := service.NewWalletService(walletRepo, timeout)
+	userService := service.NewUserService(db, userRepo, walletRepo)
+	rateService := service.NewRateService(rateRepo, timeout)
 
 	return Container{
 		Services: Services{
 			EmailCode: emailCodeService,
 			Login:     loginService,
+			Wallet:    walletService,
+			User:      userService,
+			Rate:      rateService,
 		},
 		Repos: Repositories{
 			User:      userRepo,
 			EmailCode: emailCodeRepo,
+			Wallet:    walletRepo,
+			Rate:      rateRepo,
 		},
 	}
 }

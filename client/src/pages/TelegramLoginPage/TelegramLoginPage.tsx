@@ -16,6 +16,7 @@ import './TelegramLoginPage.css';
 import telegramLogo from './telegram-logo.svg';
 import telegramDuck from './duck-telegram.webp'
 import {Icon20ErrorCircleOutline} from "@vkontakte/icons";
+import {useNavigate} from "react-router-dom";
 
 const [, e] = bem('telegram-auth-prompt');
 
@@ -25,7 +26,8 @@ export const TelegramLoginPage: FC = () => {
     const user = initDataState?.user;
     const [loading, setLoading] = useState(false)
     const [snackbar, setSnackbar] = useState(false);
-    const [error, setError] = useState('')
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
 
     const fullName = user ? `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() : '';
 
@@ -40,6 +42,11 @@ export const TelegramLoginPage: FC = () => {
             setLoading(true)
             const response = await AuthService.loginWithTelegram({init_data: initDataRaw});
             console.log('Успешный вход:', response);
+            const {access_token, refresh_token} = response.data;
+            console.log('tokens: ', access_token)
+            sessionStorage.setItem('access_token', access_token || '');
+            sessionStorage.setItem('refresh_token', refresh_token || '');
+            navigate("/bank")
         } catch (err) {
             console.error('Ошибка входа:', err);
             setError('Ошибка входа. Попробуйте снова');

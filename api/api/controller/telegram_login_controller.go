@@ -12,7 +12,7 @@ import (
 )
 
 type TelegramLoginController struct {
-	UserRepo     domain.UserRepository
+	UserService  domain.UserService
 	Env          *bootstrap.Env
 	LoginService domain.LoginService
 }
@@ -28,7 +28,6 @@ func (tc *TelegramLoginController) Login(c *gin.Context) {
 		return
 	}
 
-	// Валидация initData
 	if err := initdata.Validate(req.InitData, tc.Env.TelegramBotToken, 10*time.Minute); err != nil {
 		c.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: "Invalid init data"})
 		return
@@ -42,27 +41,19 @@ func (tc *TelegramLoginController) Login(c *gin.Context) {
 
 	tgUser := parsed.User
 
-	// Find or create user
-	user, err := tc.UserRepo.GetByTelegramID(c.Request.Context(), tgUser.ID)
+	user, err := tc.UserService.CreateUserWithWallet(c.Request.Context(), tgUser)
 	if err != nil {
-		user = domain.User{
-			TelegramID:        &tgUser.ID,
-			TelegramUsername:  &tgUser.Username,
-			TelegramFirstName: &tgUser.FirstName,
-		}
-		if err := tc.UserRepo.Create(c.Request.Context(), &user); err != nil {
-			c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Failed to create user"})
-			return
-		}
+		c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Ошибка при создании пользователя или кошелька: " + err.Error()})
+		return
 	}
 
-	accessToken, err := tc.LoginService.CreateAccessToken(&user, tc.Env.AccessTokenSecret, tc.Env.AccessTokenExpiryHour)
+	accessToken, err := tc.LoginService.CreateAccessToken(user, tc.Env.AccessTokenSecret, tc.Env.AccessTokenExpiryHour)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: err.Error()})
 		return
 	}
 
-	refreshToken, err := tc.LoginService.CreateRefreshToken(&user, tc.Env.RefreshTokenSecret, tc.Env.RefreshTokenExpiryHour)
+	refreshToken, err := tc.LoginService.CreateRefreshToken(user, tc.Env.RefreshTokenSecret, tc.Env.RefreshTokenExpiryHour)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: err.Error()})
 		return

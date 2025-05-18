@@ -21,6 +21,7 @@ func main() {
 	route.Setup(app, timeout, gin)
 
 	go telegram.StartBot(env.TelegramBotToken, env.TelegramWebAppUrl)
+	go app.Container.Services.Rate.StartScheduler()
 
 	gin.Run(env.ServerAddress)
 }

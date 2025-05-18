@@ -1,15 +1,16 @@
 package route
 
 import (
-	"github.com/gin-gonic/gin"
 	"yobank/api/controller"
 	"yobank/bootstrap"
 	"yobank/domain"
+
+	"github.com/gin-gonic/gin"
 )
 
-func NewTelegramLoginRouter(userRepo domain.UserRepository, loginService domain.LoginService, env *bootstrap.Env, group *gin.RouterGroup) {
+func NewTelegramLoginRouter(userService domain.UserService, loginService domain.LoginService, env *bootstrap.Env, group *gin.RouterGroup) {
 	tc := &controller.TelegramLoginController{
-		UserRepo:     userRepo,
+		UserService:  userService,
 		LoginService: loginService,
 		Env:          env,
 	}

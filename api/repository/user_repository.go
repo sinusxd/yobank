@@ -27,6 +27,10 @@ func (ur *userRepository) Create(c context.Context, user *domain.User) error {
 	return nil
 }
 
+func (r *userRepository) CreateWithTx(tx *gorm.DB, user *domain.User) error {
+	return tx.Create(user).Error
+}
+
 func (ur *userRepository) Fetch(c context.Context) ([]domain.User, error) {
 	var users []domain.User
 	result := ur.db.Find(&users)
@@ -66,4 +70,12 @@ func (ur *userRepository) GetByTelegramID(c context.Context, tgID int64) (domain
 	var user domain.User
 	result := ur.db.WithContext(c).Where("telegram_id = ?", tgID).First(&user)
 	return user, result.Error
+}
+
+func (r *userRepository) GetByTelegramIDWithTx(tx *gorm.DB, tgID int64) (*domain.User, error) {
+	var user domain.User
+	if err := tx.Where("telegram_id = ?", tgID).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
