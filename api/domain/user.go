@@ -13,6 +13,9 @@ type User struct {
 	TelegramID        *int64  `gorm:"uniqueIndex"`
 	TelegramUsername  *string // raw Telegram username
 	TelegramFirstName *string
+	Wallets           []Wallet `gorm:"foreignKey:UserID"`
+
+	Friends []Friend `gorm:"foreignKey:UserID"`
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
