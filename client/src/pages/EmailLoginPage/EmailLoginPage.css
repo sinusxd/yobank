@@ -1,20 +1,4 @@
-.email-login-page__placeholder {
-    margin-bottom: 24px;
-}
 
-.email-login-page__input {
-    margin-bottom: 16px;
-}
-
-.email-login-page__button {
-    margin-top: 8px;
-}
-
-.email-login-page__pin-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
 .email-login-page__pin-input--shake label {
     border-color: var(--tgui--destructive_text_color);
 }
@@ -34,6 +18,12 @@ body.macos .email-login-page__pin-input--shake label {
     z-index: 1;
 }
 
+.email-login-page__list--shake label {
+    animation: shake 0.6s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+
+
 
 
 @keyframes shake {
@@ -42,8 +32,89 @@ body.macos .email-login-page__pin-input--shake label {
     20%,40%,60%,80% { transform: translateX(12px); }
 }
 
-.email-login-page__error {
-    color: red;
-    text-align: center;
-    margin-top: 16px;
+
+
+.email-login-page__pin-input--animating label {
+    animation: wave 1s ease infinite;
 }
+
+.email-login-page__pin-input--animating > header {
+    overflow: visible !important;
+    position: relative;
+    z-index: 1;
+}
+
+.email-login-page__pin-input--animating label:nth-child(1) {
+    animation-delay: 0s;
+}
+.email-login-page__pin-input--animating label:nth-child(2) {
+    animation-delay: 0.05s;
+}
+.email-login-page__pin-input--animating label:nth-child(3) {
+    animation-delay: 0.1s;
+}
+.email-login-page__pin-input--animating label:nth-child(4) {
+    animation-delay: 0.15s;
+}
+.email-login-page__pin-input--animating label:nth-child(5) {
+    animation-delay: 0.2s;
+}
+.email-login-page__pin-input--animating label:nth-child(6) {
+    animation-delay: 0.25s;
+}
+
+@keyframes wave {
+    0% {
+        border-color: var(--tgui--button_color);
+        transform: scale(1.1);
+    }
+    100% {
+        border-color: var(--tgui--secondary_bg_color);
+        transform: scale(1);
+    }
+}
+
+body.ios .email-login-page__pin-input--animating label,
+body.macos .email-login-page__pin-input--animating label {
+    animation: wave-bg 1s ease both infinite;
+
+}
+
+body.ios .email-login-page__pin-input--animating label:nth-child(1),
+body.macos .email-login-page__pin-input--animating label:nth-child(1) {
+    animation-delay: 0s;
+}
+body.ios .email-login-page__pin-input--animating label:nth-child(2),
+body.macos .email-login-page__pin-input--animating label:nth-child(2) {
+    animation-delay: 0.1s;
+}
+body.ios .email-login-page__pin-input--animating label:nth-child(3),
+body.macos .email-login-page__pin-input--animating label:nth-child(3) {
+    animation-delay: 0.1s;
+}
+body.ios .email-login-page__pin-input--animating label:nth-child(4),
+body.macos .email-login-page__pin-input--animating label:nth-child(4) {
+    animation-delay: 0.15s;
+}
+body.ios .email-login-page__pin-input--animating label:nth-child(5),
+body.macos .email-login-page__pin-input--animating label:nth-child(5) {
+    animation-delay: 0.2s;
+}
+body.ios .email-login-page__pin-input--animating label:nth-child(6),
+body.macos .email-login-page__pin-input--animating label:nth-child(6) {
+    animation-delay: 0.25s;
+}
+
+@keyframes wave-bg {
+    0% {
+        opacity: 1;
+        background-color: var(--tgui--button_color);         /* активный фон */
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        background-color: var(--tgui--secondary_bg_color);   /* фон в покое */
+        transform: scale(1);
+    }
+}
+

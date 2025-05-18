@@ -1,0 +1,89 @@
+.bank-page__top {
+    padding: 16px;
+    background-color: #121212;
+    color: white;
+}
+
+.bank-page__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.bank-page__balance {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.bank-page__balance-subtitle {
+    font-size: 14px;
+    opacity: 0.7;
+    margin-bottom: 4px;
+}
+
+.bank-page__balance-value {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.bank-page__actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+}
+
+.bank-page__action-button {
+    flex: 1;
+    min-width: 80px;
+}
+
+.bank-page__assets .tui-Cell {
+    background-color: #1e1e1e;
+    margin-top: 8px;
+    border-radius: 12px;
+}
+
+.bank-page__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 18px;
+}
+
+.bank-page__icon.usd {
+    background-color: #1ecb81;
+    color: white;
+}
+
+.bank-page__icon.ton {
+    background-color: #0098ea;
+    color: white;
+}
+
+.bank-page__icon.btc {
+    background-color: #f7931a;
+    color: white;
+}
+
+.bank-page__icon.major {
+    background-color: #8253e4;
+    color: white;
+}
+
+.bank-page__bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    padding: 12px;
+    background-color: #121212;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+}

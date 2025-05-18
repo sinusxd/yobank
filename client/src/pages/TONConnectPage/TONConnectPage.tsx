@@ -1,5 +1,6 @@
 import { openLink } from '@telegram-apps/sdk-react';
 import { TonConnectButton, useTonWallet } from '@tonconnect/ui-react';
+
 import {
   Avatar,
   Cell,

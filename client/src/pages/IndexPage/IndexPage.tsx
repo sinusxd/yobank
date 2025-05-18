@@ -39,6 +39,9 @@ export const IndexPage: FC = () => {
           <Link to="/login">
             <Cell subtitle="Login via telegram">Login</Cell>
           </Link>
+          <Link to="/bank">
+            <Cell subtitle="Bank">Bank</Cell>
+          </Link>
         </Section>
       </List>
     </Page>

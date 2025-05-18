@@ -1,0 +1,15 @@
+.telegram-auth-prompt__container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 24px;
+}
+
+.telegram-auth-prompt__button {
+    margin-top: 16px;
+    background-color: var(--tgui--button_color);
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(34, 158, 217, 0.25);
+    border-radius: 24px;
+}

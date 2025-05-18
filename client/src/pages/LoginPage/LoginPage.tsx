@@ -34,12 +34,14 @@ export const LoginPage: FC = () => {
 
             <List>
                 <Section header="Выберите способ входа">
-                    <Cell
-                        before={<Image src={telegramLogo} style={{backgroundColor: '#24A1DE'}}/>}
-                        subtitle="Используется ваш telegram-аккаунт"
-                    >
-                        Продолжить с Telegram
-                    </Cell>
+                    <Link to={"/telegram-login"}>
+                        <Cell
+                            before={<Image src={telegramLogo} style={{backgroundColor: '#24A1DE'}}/>}
+                            subtitle="Используется ваш telegram-аккаунт"
+                        >
+                            Продолжить с Telegram
+                        </Cell>
+                    </Link>
                     <Link to={"/email-login"}>
                         <Cell
                             before={<Image src={mailLogo} style={{backgroundColor: '#24A1DE'}}/>}

@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
+	"net/http"
+	"time"
 	"yobank/bootstrap"
 	"yobank/domain"
 	"yobank/internal/telegram"
@@ -35,6 +35,7 @@ func (lc *EmailLoginController) RequestCode(c *gin.Context) {
 }
 
 func (lc *EmailLoginController) VerifyCode(c *gin.Context) {
+	time.Sleep(5 * time.Second)
 	var req struct {
 		Email string `json:"email" binding:"required,email"`
 		Code  string `json:"code" binding:"required"`
@@ -54,7 +55,7 @@ func (lc *EmailLoginController) VerifyCode(c *gin.Context) {
 	user, err := lc.LoginService.GetUserByEmail(c, req.Email)
 	if err != nil {
 		// пользователь не найден — создаём
-		user = domain.User{Email: req.Email}
+		user = domain.User{Email: req.Email, Username: req.Email}
 		if err := lc.UserRepository.Create(c.Request.Context(), &user); err != nil {
 			c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Не удалось создать пользователя"})
 			return

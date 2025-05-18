@@ -1,28 +1,34 @@
-import { FC, useState, useEffect, useRef } from 'react';
-import { Section, Placeholder, Button, Input, PinInput } from '@telegram-apps/telegram-ui';
-import { bem } from '@/css/bem';
+import {FC, useEffect, useRef, useState} from 'react';
+import {Button, Input, List, PinInput, Placeholder, Section, Snackbar} from '@telegram-apps/telegram-ui';
+import {bem} from '@/css/bem';
 import AuthService from '@/api/services/telegramAuthService';
 import './EmailLoginPage.css';
-import { EmailCodeRequest } from "@/api/models/request/emailCodeRequest.ts";
-import { VerifyCodeRequest } from "@/api/models/request/verifyCodeRequest.ts";
-import { VerifyCodeResponse } from "@/api/models/response/verifyCodeResponse.ts";
-import { Page } from "@/components/Page.tsx";
+import {EmailCodeRequest} from "@/api/models/request/emailCodeRequest.ts";
+import {VerifyCodeRequest} from "@/api/models/request/verifyCodeRequest.ts";
+import {VerifyCodeResponse} from "@/api/models/response/verifyCodeResponse.ts";
+import {Page} from "@/components/Page.tsx";
 import {retrieveLaunchParams} from "@telegram-apps/sdk-react";
+import codeLogo from './code.gif'
+import {Icon20ErrorCircleOutline} from "@vkontakte/icons";
+import {isValidEmail} from "@/utils/validateEmail.ts";
 
 const [, e] = bem('email-login-page');
 
 export const EmailLoginPage: FC = () => {
-    const [step, setStep]   = useState<'email' | 'code'>('code');
+    const [step, setStep] = useState<'email' | 'code'>('email');
     const [email, setEmail] = useState('');
-    const [code, setCode]   = useState<number[]>([]);
+    const [code, setCode] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError]     = useState('');
-    const [shake, setShake]     = useState(false);
-    const [pinKey, setPinKey]   = useState(0);
+    const [error, setError] = useState('');
+    const [shake, setShake] = useState(false);
+    const [animating, setAnimating] = useState(false)
+    const [pinKey, setPinKey] = useState(0);
     const skipFirst = useRef(true);
+    const [snackbar, setSnackbar] = useState(false);
+    const [inputStatus, setInputStatus] = useState<'default' | 'error' | 'focused'>('default')
 
     const launchParams = retrieveLaunchParams();
-    const { tgWebAppPlatform: platform } = launchParams;
+    const {tgWebAppPlatform: platform} = launchParams;
 
     useEffect(() => {
         if (platform === 'ios') {
@@ -36,25 +42,49 @@ export const EmailLoginPage: FC = () => {
         setLoading(true);
         setError('');
         try {
-            await AuthService.requestCode({ email } as EmailCodeRequest);
+            if (!isValidEmail(email)) {
+                setError('Введите корректный email');
+                setInputStatus('error')
+                setShake(true)
+                setTimeout(() => {
+                    setShake(false)
+                }, 1000)
+                setTimeout(() => setInputStatus('default'), 500)
+                setSnackbar(true)
+                return;
+            }
+            await AuthService.requestCode({email} as EmailCodeRequest);
             setStep('code');
-        } finally {
+        }
+        catch {
+            setError('Не удалось отправить код на почту');
+            setInputStatus('error')
+            setShake(true)
+            setTimeout(() => {
+                setShake(false)
+            }, 1000)
+            setTimeout(() => setInputStatus('default'), 500)
+            setSnackbar(true)
+        }
+        finally {
             setLoading(false);
         }
     };
 
     const verifyCode = async () => {
         setLoading(true);
+        setAnimating(true)
         setError('');
         try {
-            const { data } = await AuthService.verifyCode(
-                { email, code: code.join('') } as VerifyCodeRequest,
+            const {data} = await AuthService.verifyCode(
+                {email, code: code.join('')} as VerifyCodeRequest,
             );
-            const { access_token, refresh_token }: VerifyCodeResponse = data;
-            sessionStorage.setItem('access_token',  access_token  || '');
+            const {access_token, refresh_token}: VerifyCodeResponse = data;
+            sessionStorage.setItem('access_token', access_token || '');
             sessionStorage.setItem('refresh_token', refresh_token || '');
         } catch {
             setError('Неверный или просроченный код');
+            setAnimating(false)
             setShake(true);
             if ('vibrate' in navigator) navigator.vibrate(200);
             setTimeout(() => {
@@ -65,6 +95,7 @@ export const EmailLoginPage: FC = () => {
             }, 600);
         } finally {
             setLoading(false);
+            setAnimating(false)
         }
     };
 
@@ -74,32 +105,63 @@ export const EmailLoginPage: FC = () => {
 
     return (
         <Page back>
+            {snackbar &&
+                <Snackbar
+                    onClose={() => setSnackbar(false)}
+                    before={<Icon20ErrorCircleOutline/>}
+                    description={error}
+                    children={'Ошибка'}
+                    style={{paddingBottom: "20px"}}
+
+                />
+            }
             {step === 'email' && (
-                <Section>
+                <div style={{padding: "10px"}}>
                     <Placeholder
                         className={e('placeholder')}
                         header="Вход по почте"
                         description="Мы отправим код подтверждения на вашу почту"
                     />
-                    <Input
-                        className={e('input')}
-                        type="email"
-                        placeholder="Введите вашу почту"
-                        value={email}
-                        onChange={v => setEmail(v.target.value)}
-                        disabled={loading}
-                    />
-                    <Button
-                        className={e('button')}
-                        stretched
-                        loading={loading}
-                        disabled={!email}
-                        onClick={requestCode}
-                    >
-                        Получить код
-                    </Button>
-                    {error && step === 'email' && <p className={e('error')}>{error}</p>}
-                </Section>
+                    <>
+                        <List style={{
+                            padding: "35px",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: "10px"
+                        }}
+                              className={e('list', {shake})}
+                        >
+                            <div style={{width: "100%"}}>
+                                <Input
+                                    status={inputStatus || 'default'}
+                                    style={{textAlign: 'center'}}
+                                    type="email"
+                                    placeholder="Введите вашу почту"
+                                    value={email}
+                                    onChange={v => setEmail(v.target.value)}
+                                    disabled={loading}
+                                />
+                                <Button
+                                    style={{marginTop: "20px"}}
+                                    className={e('button')}
+                                    stretched
+                                    loading={loading}
+                                    disabled={!email}
+                                    onClick={requestCode}
+                                >
+                                    Получить код
+                                </Button>
+                            </div>
+                            <img
+                                width={"200"}
+                                height={"200"}
+                                alt={"duck"}
+                                src={codeLogo}
+                            />
+                        </List>
+                    </>
+                </div>
             )}
 
             {step === 'code' && (
@@ -107,7 +169,7 @@ export const EmailLoginPage: FC = () => {
                     <PinInput
                         label="Введите код"
                         key={pinKey}
-                        className={e('pin-input', { shake })}
+                        className={e('pin-input', {shake, animating})}
                         pinCount={6}
                         value={code}
                         onChange={vals => {
