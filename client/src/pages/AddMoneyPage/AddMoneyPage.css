@@ -1,0 +1,8 @@
+.add-money-page__cell {
+    background: var(--tgui--bg_color);
+    border-radius: 10px;
+}
+
+.add-money-page__cell svg {
+    color: var(--tgui--accent_text_color);
+}

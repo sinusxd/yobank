@@ -18,8 +18,8 @@ func NewUserRepository(db *gorm.DB) domain.UserRepository {
 	}
 }
 
-func (ur *userRepository) Create(c context.Context, user *domain.User) error {
-	result := ur.db.Create(user)
+func (r *userRepository) Create(c context.Context, user *domain.User) error {
+	result := r.db.Create(user)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -31,9 +31,9 @@ func (r *userRepository) CreateWithTx(tx *gorm.DB, user *domain.User) error {
 	return tx.Create(user).Error
 }
 
-func (ur *userRepository) Fetch(c context.Context) ([]domain.User, error) {
+func (r *userRepository) Fetch(c context.Context) ([]domain.User, error) {
 	var users []domain.User
-	result := ur.db.Find(&users)
+	result := r.db.Find(&users)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -41,9 +41,9 @@ func (ur *userRepository) Fetch(c context.Context) ([]domain.User, error) {
 	return users, nil
 }
 
-func (ur *userRepository) GetByEmail(c context.Context, email string) (domain.User, error) {
+func (r *userRepository) GetByEmail(c context.Context, email string) (domain.User, error) {
 	var user domain.User
-	result := ur.db.Where("email = ?", email).First(&user)
+	result := r.db.Where("email = ?", email).First(&user)
 	if result.Error != nil {
 		return domain.User{}, result.Error
 	}
@@ -51,14 +51,14 @@ func (ur *userRepository) GetByEmail(c context.Context, email string) (domain.Us
 	return user, nil
 }
 
-func (ur *userRepository) GetByID(c context.Context, id string) (domain.User, error) {
+func (r *userRepository) GetByID(c context.Context, id string) (domain.User, error) {
 	uid, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
 		return domain.User{}, err
 	}
 
 	var user domain.User
-	result := ur.db.First(&user, uint(uid))
+	result := r.db.First(&user, uint(uid))
 	if result.Error != nil {
 		return domain.User{}, result.Error
 	}

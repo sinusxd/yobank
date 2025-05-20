@@ -16,4 +16,5 @@ func NewWalletRouter(walletService domain.WalletService, authGroup *gin.RouterGr
 	authGroup.GET("/wallet", wc.GetUserWallet)
 	authGroup.POST("/wallet", wc.CreateWallet)
 	authGroup.POST("/wallet/init", wc.InitWallet)
+	authGroup.POST("/wallet/topup", wc.TopUpWallet)
 }

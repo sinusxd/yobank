@@ -17,6 +17,9 @@ import telegramLogo from './telegram-logo.svg';
 import telegramDuck from './duck-telegram.webp'
 import {Icon20ErrorCircleOutline} from "@vkontakte/icons";
 import {useNavigate} from "react-router-dom";
+import UserService from "@/api/services/userService.ts";
+import {useDispatch} from "react-redux";
+import {setUser} from "@/store/userSlice.ts";
 
 const [, e] = bem('telegram-auth-prompt');
 
@@ -28,6 +31,7 @@ export const TelegramLoginPage: FC = () => {
     const [snackbar, setSnackbar] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const fullName = user ? `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() : '';
 
@@ -46,6 +50,8 @@ export const TelegramLoginPage: FC = () => {
             console.log('tokens: ', access_token)
             sessionStorage.setItem('access_token', access_token || '');
             sessionStorage.setItem('refresh_token', refresh_token || '');
+            const user = await UserService.getCurrentUser();
+            dispatch(setUser(user));
             navigate("/bank")
         } catch (err) {
             console.error('Ошибка входа:', err);

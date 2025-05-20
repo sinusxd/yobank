@@ -8,12 +8,12 @@ import (
 )
 
 type User struct {
-	ID                uint    `gorm:"primaryKey"`
-	Email             *string `gorm:"uniqueIndex"`
-	Username          string  `gorm:"uniqueIndex;not null"` // для логики приложения
-	TelegramID        *int64  `gorm:"uniqueIndex"`
-	TelegramUsername  *string // raw Telegram username
-	TelegramFirstName *string
+	ID                uint     `gorm:"primaryKey" json:"id"`
+	Email             *string  `gorm:"uniqueIndex" json:"email"`
+	Username          string   `gorm:"uniqueIndex;not null" json:"username"` // для логики приложения
+	TelegramID        *int64   `gorm:"uniqueIndex" json:"telegramId"`
+	TelegramUsername  *string  `json:"telegramUsername"` // raw Telegram username
+	TelegramFirstName *string  `json:"telegramFirstName"`
 	Wallets           []Wallet `gorm:"foreignKey:UserID"`
 
 	Friends []Friend `gorm:"foreignKey:UserID"`
@@ -35,4 +35,5 @@ type UserRepository interface {
 
 type UserService interface {
 	CreateUserWithWallet(ctx context.Context, tgUser initdata.User) (*User, error)
+	GetUserInfoByID(ctx context.Context, userID uint) (*User, error)
 }

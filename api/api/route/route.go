@@ -20,4 +20,5 @@ func Setup(app bootstrap.Application, timeout time.Duration, gin *gin.Engine) {
 	protectedRouter := gin.Group("/api/v1")
 	protectedRouter.Use(middleware.JwtAuthMiddleware(app.Env.AccessTokenSecret))
 	NewWalletRouter(container.Services.Wallet, protectedRouter)
+	NewUserRouter(container.Services.User, protectedRouter)
 }

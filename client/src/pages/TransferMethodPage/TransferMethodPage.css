@@ -1,0 +1,8 @@
+.transfer-method-page__cell {
+    background: var(--tgui--bg_color);
+    border-radius: 10px;
+}
+
+.transfer-method-page__cell svg {
+    color: var(--tgui--accent_text_color);
+}

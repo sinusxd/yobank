@@ -5,6 +5,7 @@ import (
 	"fmt"
 	initdata "github.com/telegram-mini-apps/init-data-golang"
 	"gorm.io/gorm"
+	"strconv"
 	"yobank/domain"
 )
 
@@ -48,11 +49,9 @@ func (s *userService) CreateUserWithWallet(ctx context.Context, tgUser initdata.
 			return fmt.Errorf("cannot create user: %w", err)
 		}
 
-		number := s.WalletRepo.GenerateWalletNumber()
-
 		wallet := &domain.Wallet{
 			UserID:   user.ID,
-			Number:   number,
+			Number:   s.WalletRepo.GenerateWalletNumber(),
 			Balance:  0,
 			Currency: "RUB",
 			Status:   "active",
@@ -60,10 +59,52 @@ func (s *userService) CreateUserWithWallet(ctx context.Context, tgUser initdata.
 		if err := s.WalletRepo.CreateWithTx(tx, wallet); err != nil {
 			return fmt.Errorf("cannot create wallet: %w", err)
 		}
+
+		wallet = &domain.Wallet{
+			UserID:   user.ID,
+			Number:   s.WalletRepo.GenerateWalletNumber(),
+			Balance:  0,
+			Currency: "USD",
+			Status:   "active",
+		}
+		if err := s.WalletRepo.CreateWithTx(tx, wallet); err != nil {
+			return fmt.Errorf("cannot create wallet: %w", err)
+		}
+
+		wallet = &domain.Wallet{
+			UserID:   user.ID,
+			Number:   s.WalletRepo.GenerateWalletNumber(),
+			Balance:  0,
+			Currency: "EUR",
+			Status:   "active",
+		}
+		if err := s.WalletRepo.CreateWithTx(tx, wallet); err != nil {
+			return fmt.Errorf("cannot create wallet: %w", err)
+		}
+
+		wallet = &domain.Wallet{
+			UserID:   user.ID,
+			Number:   s.WalletRepo.GenerateWalletNumber(),
+			Balance:  0,
+			Currency: "CNY",
+			Status:   "active",
+		}
+		if err := s.WalletRepo.CreateWithTx(tx, wallet); err != nil {
+			return fmt.Errorf("cannot create wallet: %w", err)
+		}
+
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
+}
+
+func (s *userService) GetUserInfoByID(ctx context.Context, userID uint) (*domain.User, error) {
+	user, err := s.UserRepo.GetByID(ctx, strconv.FormatUint(uint64(userID), 10))
+	if err != nil {
+		return nil, fmt.Errorf("пользователь не найден: %w", err)
+	}
+	return &user, nil
 }

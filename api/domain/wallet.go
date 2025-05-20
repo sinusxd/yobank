@@ -58,4 +58,5 @@ type WalletService interface {
 	CreateWallet(ctx context.Context, userID uint, currency string) (Wallet, error)
 	GetWalletByUserID(ctx context.Context, userID uint) ([]Wallet, error)
 	InitWalletIfNotExists(ctx context.Context, userID uint) (Wallet, error)
+	TopUpWallet(ctx context.Context, userID uint, currency string, amount int64) (Wallet, error)
 }

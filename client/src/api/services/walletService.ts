@@ -12,18 +12,20 @@ export interface Wallet {
 }
 
 export default class WalletService {
-    /**
-     * Получение информации о кошельке пользователя
-     */
     static async getUserWallets(): Promise<AxiosResponse<Wallet[]>> {
         return api.get<Wallet[]>('/api/v1/wallet');
     }
-    
-    /**
-     * Проверка наличия и создание кошелька, если его нет
-     */
+
     static async initWalletIfNeeded(): Promise<Wallet> {
         const response = await api.post<Wallet>('/api/v1/wallet/init');
         return response.data;
     }
-} 
+
+    static async topUpWallet(currency: string, amount: number): Promise<Wallet> {
+        const response = await api.post<Wallet>('/api/v1/wallet/topup', {
+            currency,
+            amount
+        });
+        return response.data;
+    }
+}

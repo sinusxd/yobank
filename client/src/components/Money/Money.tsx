@@ -29,6 +29,7 @@ import {
     mapCurrencyToSymbol,
     sumAllWalletsInRub,
 } from "@/utils/currency.ts";
+import {useNavigate} from "react-router-dom";
 
 export const Money: FC = () => {
     const initDataState = useSignal(_initDataState);
@@ -37,6 +38,7 @@ export const Money: FC = () => {
     const [rates, setRates] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     // Получаем кошельки и курсы при загрузке компонента
     useEffect(() => {
@@ -95,10 +97,10 @@ export const Money: FC = () => {
             </Placeholder>
 
             <InlineButtons mode="bezeled">
-                <InlineButtonsItem text="Отправить">
+                <InlineButtonsItem text="Отправить" onClick={() => navigate("/transfer-money")}>
                     <Icon32SendCircle width={24} height={24}/>
                 </InlineButtonsItem>
-                <InlineButtonsItem text="Пополнить">
+                <InlineButtonsItem text="Пополнить" onClick={() => navigate("/add-money")}>
                     <Icon16AddCircle width={24} height={24}/>
                 </InlineButtonsItem>
                 <InlineButtonsItem text="QR" onClick={openQr}>
@@ -121,7 +123,7 @@ export const Money: FC = () => {
                             key={wallet.id}
                             subtitle={
                                 <Text>
-                                    {rates[wallet.currency]} {mapCurrencyToSymbol(wallet.currency)}
+                                    {rates[wallet.currency].toFixed(2)} {mapCurrencyToSymbol(wallet.currency)}
                                 </Text>
                             }
                             before={

@@ -1,13 +1,10 @@
 package controller
 
 import (
+	"github.com/gin-gonic/gin"
 	"net/http"
-	"time"
 	"yobank/bootstrap"
 	"yobank/domain"
-	"yobank/internal/telegram"
-
-	"github.com/gin-gonic/gin"
 )
 
 type EmailLoginController struct {
@@ -37,7 +34,6 @@ func (lc *EmailLoginController) RequestCode(c *gin.Context) {
 }
 
 func (lc *EmailLoginController) VerifyCode(c *gin.Context) {
-	time.Sleep(5 * time.Second)
 	var req struct {
 		Email string `json:"email" binding:"required,email"`
 		Code  string `json:"code" binding:"required"`
@@ -64,14 +60,12 @@ func (lc *EmailLoginController) VerifyCode(c *gin.Context) {
 		}
 	}
 
-	// Создаем кошелек для пользователя, если его нет
 	if lc.WalletService != nil {
 		wallet, err := lc.WalletService.InitWalletIfNotExists(c.Request.Context(), user.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Ошибка при инициализации кошелька"})
 			return
 		}
-		// Можно добавить информацию о созданном кошельке в ответ, если нужно
 		_ = wallet
 	}
 
@@ -90,20 +84,5 @@ func (lc *EmailLoginController) VerifyCode(c *gin.Context) {
 	c.JSON(http.StatusOK, domain.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-	})
-}
-
-func (lc *EmailLoginController) ShowInitDataHandler(c *gin.Context) {
-	initData, ok := telegram.CtxInitData(c.Request.Context())
-	if !ok {
-		c.AbortWithStatusJSON(401, gin.H{"message": "Init data not found"})
-		return
-	}
-
-	c.JSON(200, gin.H{
-		"user_id":    initData.User.ID,
-		"first_name": initData.User.FirstName,
-		"username":   initData.User.Username,
-		"auth_date":  initData.AuthDate(),
 	})
 }

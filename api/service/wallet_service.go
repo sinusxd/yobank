@@ -63,12 +63,67 @@ func (w *walletService) InitWalletIfNotExists(ctx context.Context, userID uint) 
 	defer cancel()
 
 	wallets, err := w.walletRepository.GetByUserID(ctx, userID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) || len(wallets) == 0 {
-			return w.CreateWallet(ctx, userID, "RUB")
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return domain.Wallet{}, err
+	}
+	if len(wallets) == 0 {
+		created, err := w.CreateWallet(ctx, userID, "RUB")
+		if err != nil {
+			return domain.Wallet{}, err
 		}
+
+		created, err = w.CreateWallet(ctx, userID, "USD")
+		if err != nil {
+			return domain.Wallet{}, err
+		}
+
+		created, err = w.CreateWallet(ctx, userID, "EUR")
+		if err != nil {
+			return domain.Wallet{}, err
+		}
+
+		created, err = w.CreateWallet(ctx, userID, "CNY")
+		if err != nil {
+			return domain.Wallet{}, err
+		}
+
+		return created, nil
+	}
+	return wallets[0], nil
+}
+
+func (w *walletService) TopUpWallet(ctx context.Context, userID uint, currency string, amount int64) (domain.Wallet, error) {
+	ctx, cancel := context.WithTimeout(ctx, w.contextTimeout)
+	defer cancel()
+
+	if amount <= 0 {
+		return domain.Wallet{}, errors.New("amount must be positive")
+	}
+
+	wallets, err := w.walletRepository.GetByUserID(ctx, userID)
+	if err != nil {
 		return domain.Wallet{}, err
 	}
 
-	return wallets[0], nil
+	var target *domain.Wallet
+	for i := range wallets {
+		if wallets[i].Currency == currency {
+			target = &wallets[i]
+			break
+		}
+	}
+	if target == nil {
+		return domain.Wallet{}, errors.New("кошелек с указанной валютой не найден")
+	}
+	if target.Status != "active" {
+		return domain.Wallet{}, errors.New("кошелек неактивен")
+	}
+
+	target.Balance += amount
+
+	if err := w.walletRepository.Update(ctx, target); err != nil {
+		return domain.Wallet{}, err
+	}
+
+	return *target, nil
 }

@@ -9,6 +9,9 @@ import {LoginPage} from "@/pages/LoginPage/LoginPage.tsx";
 import {EmailLoginPage} from "@/pages/EmailLoginPage/EmailLoginPage.tsx";
 import {TelegramLoginPage} from "@/pages/TelegramLoginPage/TelegramLoginPage.tsx";
 import {BankPage} from "@/pages/BankPage/BankPage.tsx";
+import {AddMoneyPage} from "@/pages/AddMoneyPage/AddMoneyPage.tsx";
+import OnlineAddMoneyPage from "@/pages/OnlineAddMoneyPage/OnlineAddMoneyPage.tsx";
+import {TransferMethodPage} from "@/pages/TransferMethodPage/TransferMethodPage.tsx";
 
 interface Route {
     path: string;
@@ -23,6 +26,9 @@ export const routes: Route[] = [
     {path: '/email-login', Component: EmailLoginPage, 'title': 'Login via email'},
     {path: '/telegram-login', Component: TelegramLoginPage, 'title': 'Login via telegram'},
     {path: '/bank', Component: BankPage, title: 'Bank'},
+    {path: '/add-money', Component: AddMoneyPage, title: 'Add money'},
+    {path: '/add-money/online', Component: OnlineAddMoneyPage, title: 'Add money online'},
+    {path: '/transfer-money', Component: TransferMethodPage, title: 'Transfer money'},
     {path: '/init-data', Component: InitDataPage, title: 'Init Data'},
     {path: '/theme-params', Component: ThemeParamsPage, title: 'Theme Params'},
     {path: '/launch-params', Component: LaunchParamsPage, title: 'Launch Params'},

@@ -1,0 +1,4 @@
+
+.money__skeleton ::before, ::after {
+    border-radius: 10px;
+}

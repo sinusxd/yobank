@@ -11,6 +11,10 @@ import {retrieveLaunchParams} from "@telegram-apps/sdk-react";
 import codeLogo from './code.gif'
 import {Icon20ErrorCircleOutline} from "@vkontakte/icons";
 import {isValidEmail} from "@/utils/validateEmail.ts";
+import {useNavigate} from "react-router-dom";
+import UserService from "@/api/services/userService.ts";
+import {useDispatch} from "react-redux";
+import {setUser} from "@/store/userSlice.ts";
 
 const [, e] = bem('email-login-page');
 
@@ -29,6 +33,9 @@ export const EmailLoginPage: FC = () => {
 
     const launchParams = retrieveLaunchParams();
     const {tgWebAppPlatform: platform} = launchParams;
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+
 
     useEffect(() => {
         if (platform === 'ios') {
@@ -82,6 +89,10 @@ export const EmailLoginPage: FC = () => {
             const {access_token, refresh_token}: VerifyCodeResponse = data;
             sessionStorage.setItem('access_token', access_token || '');
             sessionStorage.setItem('refresh_token', refresh_token || '');
+            const user = await UserService.getCurrentUser();
+
+            dispatch(setUser(user)); // сохраняем в Redux
+            navigate("/bank")
         } catch {
             setError('Неверный или просроченный код');
             setAnimating(false)

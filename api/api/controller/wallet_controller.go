@@ -89,3 +89,35 @@ func (wc *WalletController) CreateWallet(c *gin.Context) {
 
 	c.JSON(http.StatusOK, wallet)
 }
+
+func (wc *WalletController) TopUpWallet(c *gin.Context) {
+	id, ok := c.Get("x-user-id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: "Unauthorized"})
+		return
+	}
+
+	userID, err := strconv.ParseUint(id.(string), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: "Unauthorized"})
+		return
+	}
+
+	// Структура запроса — валюта и сумма в копейках
+	var req struct {
+		Currency string `json:"currency" binding:"required"`
+		Amount   int64  `json:"amount" binding:"required"` // в копейках
+	}
+	if err := c.ShouldBindJSON(&req); err != nil || req.Amount <= 0 || req.Currency == "" {
+		c.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: "Некорректные данные для пополнения"})
+		return
+	}
+
+	updatedWallet, err := wc.WalletService.TopUpWallet(c.Request.Context(), uint(userID), req.Currency, req.Amount)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, updatedWallet)
+}
