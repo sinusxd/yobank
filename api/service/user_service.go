@@ -125,7 +125,7 @@ func (s *userService) GetUserInfoByTelegramID(ctx context.Context, tgID int64) (
 	return &user, nil
 }
 
-func (s *userService) GetUserInfoByUsername(ctx context.Context, username string) (*domain.User, error) {
+func (s *userService) GetByUsername(ctx context.Context, username string) (*domain.User, error) {
 	user, err := s.UserRepo.GetByUsername(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("пользователь не найден: %w", err)

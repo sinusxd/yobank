@@ -39,5 +39,5 @@ type UserService interface {
 	GetUserInfoByID(ctx context.Context, userID uint) (*User, error)
 	GetUserInfoByEmail(ctx context.Context, email string) (*User, error)
 	GetUserInfoByTelegramID(ctx context.Context, tgID int64) (*User, error)
-	GetByUsername(ctx context.Context, username string) (User, error)
+	GetByUsername(ctx context.Context, username string) (*User, error)
 }
