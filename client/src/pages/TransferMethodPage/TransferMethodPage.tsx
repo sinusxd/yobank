@@ -4,7 +4,7 @@ import {
     Button,
     Cell,
     Input,
-    List,
+    List, Section,
     Select,
     Spinner,
     Text,
@@ -19,23 +19,20 @@ import UserService, { User } from "@/api/services/userService";
 import WalletService, { Wallet } from "@/api/services/walletService";
 import TransferService from "@/api/services/transferService";
 import { Page } from "@/components/Page";
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { mapCurrencyToSymbol } from "@/utils/currency";
 
 type TransferMethod = "email" | "username" | "card";
 type Step = "choose" | "form";
 
 const mapMethodToLabel = (method: TransferMethod) => {
     switch (method) {
-        case "email":
-            return "По email";
-        case "username":
-            return "По имени пользователя";
-        case "card":
-            return "По номеру счёта";
-        default:
-            return "";
+        case "email": return "Email";
+        case "username": return "Имя пользователя";
+        case "card": return "Номер счёта";
+        default: return "";
     }
-}
+};
 
 const METHOD_OPTIONS = [
     {
@@ -61,11 +58,9 @@ const METHOD_OPTIONS = [
 export const TransferMethodPage: FC = () => {
     const [step, setStep] = useState<Step>("choose");
     const [method, setMethod] = useState<TransferMethod>("username");
-
     const [wallets, setWallets] = useState<Wallet[]>([]);
     const [selectedWalletId, setSelectedWalletId] = useState<number | null>(null);
     const [amount, setAmount] = useState<string>("");
-
     const [target, setTarget] = useState("");
     const [receiver, setReceiver] = useState<User | null>(null);
     const [receiverWallets, setReceiverWallets] = useState<Wallet[]>([]);
@@ -118,12 +113,23 @@ export const TransferMethodPage: FC = () => {
 
     const handleTransfer = async () => {
         if (!selectedWalletId || !receiverWalletId || !amount) return;
-        await TransferService.makeTransfer({
-            senderWalletId: selectedWalletId,
-            receiverWalletId,
-            amount: parseInt(amount, 10),
-        });
-        navigate("/bank")
+        try {
+            const numericAmount = parseFloat(amount.replace(",", "."));
+            if (isNaN(numericAmount) || numericAmount <= 0) {
+                alert("Введите корректную сумму");
+                return;
+            }
+            const amountInMinorUnits = Math.round(numericAmount * 100);
+            await TransferService.makeTransfer({
+                senderWalletId: selectedWalletId,
+                receiverWalletId,
+                amount: amountInMinorUnits,
+            });
+            alert("✅ Перевод выполнен успешно");
+            navigate("/bank");
+        } catch (err: any) {
+            alert(`❌ Ошибка перевода: ${err?.response?.data?.message || "Неизвестная ошибка"}`);
+        }
     };
 
     if (step === "choose") {
@@ -133,7 +139,6 @@ export const TransferMethodPage: FC = () => {
                     <Title style={{ textAlign: "center", marginTop: 40, marginBottom: 20 }} level="1" weight="1">
                         Куда перевести?
                     </Title>
-
                     {METHOD_OPTIONS.map(({ key, label, subtitle, icon }) => (
                         <Cell
                             key={key}
@@ -156,16 +161,8 @@ export const TransferMethodPage: FC = () => {
         <Page back={true}>
             <List>
                 <Title style={{ textAlign: "center", marginTop: 40, marginBottom: 20 }} level="1" weight="1">
-                    Перевод по {
-                    method === "email" ? "email" :
-                        method === "username" ? "имени пользователя" :
-                            "номеру счёта"
-                }
+                    Перевод {mapMethodToLabel(method).toLowerCase()}
                 </Title>
-
-                <List>
-
-                </List>
 
                 <Cell subtitle={<Text color="secondary">Счёт для списания</Text>}>
                     <Select
@@ -175,22 +172,41 @@ export const TransferMethodPage: FC = () => {
                         <option disabled value="">Выберите счёт</option>
                         {wallets.map(w => (
                             <option key={w.id} value={w.id}>
-                                {w.currency} ({w.number})
+                                {w.currency} ({w.number}) • {(w.balance / 100).toFixed(2)} {mapCurrencyToSymbol(w.currency)}
                             </option>
                         ))}
                     </Select>
                 </Cell>
 
+                {senderWallet && (
+                    <Section
+                        header={'Выбранный счёт'}
+                        style={{
+                            border: "1px solid var(--tgui--separator_color)",
+                            borderRadius: 12,
+                            padding: 12,
+                            marginBottom: 12
+                        }}
+                    >
+                        <List>
+                            <Cell color="secondary">Валюта: {senderWallet.currency}</Cell>
+                            <Cell color="secondary">Номер: {senderWallet.number}</Cell>
+                            <Cell>Баланс: {(senderWallet.balance / 100).toFixed(2)} {mapCurrencyToSymbol(senderWallet.currency)}</Cell>
+                        </List>
+                    </Section>
+                )}
+
                 <Input
                     placeholder={mapMethodToLabel(method)}
                     value={target}
                     onChange={(e) => setTarget(e.target.value)}
+                    style={{ width: "100%", margin: "12px 0" }}
                 />
 
                 {loading && <Spinner size="l" />}
                 {receiver && (
                     <Cell
-                        before={<Avatar  fallbackIcon={<span>😕</span>} />}
+                        before={<Avatar fallbackIcon={<span>😕</span>} />}
                         subtitle={<Text color="secondary">{receiver.email || receiver.telegramUsername}</Text>}
                     >
                         {receiver.telegramFirstName || receiver.username}
@@ -217,9 +233,22 @@ export const TransferMethodPage: FC = () => {
 
                 <Input
                     placeholder="Введите сумму"
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    type="text"
+                    inputMode="decimal"
+                    value={amount ? `${amount} ${senderWallet ? mapCurrencyToSymbol(senderWallet.currency) : ""}` : ""}
+                    onChange={(e) => {
+                        const raw = e.target.value.replace(/[^\d.,]/g, "");
+                        const normalized = raw.replace(",", ".");
+                        if (/^\d*([.]?\d{0,2})?$/.test(normalized)) {
+                            setAmount(normalized);
+                            requestAnimationFrame(() => {
+                                const el = e.target as HTMLInputElement;
+                                const pos = normalized.length;
+                                el.setSelectionRange(pos, pos);
+                            });
+                        }
+                    }}
+                    style={{ width: "100%", margin: "12px 0" }}
                 />
 
                 <Button
@@ -235,10 +264,10 @@ export const TransferMethodPage: FC = () => {
                     size="l"
                     stretched
                     onClick={() => setStep("choose")}
+                    style={{ marginTop: 12 }}
                 >
                     Назад к выбору способа
                 </Button>
-
             </List>
         </Page>
     );

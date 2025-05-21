@@ -49,7 +49,6 @@ export const SettingsPage: FC = () => {
                     <Section header="Профиль">
                         <Cell>
                             <Text weight="2">{user?.username}</Text>
-                            {user?.email && <Text color="secondary">{user.email}</Text>}
                         </Cell>
                     </Section>
 
