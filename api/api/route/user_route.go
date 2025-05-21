@@ -17,4 +17,6 @@ func NewUserRouter(userService domain.UserService, group *gin.RouterGroup) {
 	group.GET("/users/email/:email", uc.GetByEmail)
 	group.GET("/users/telegram/:telegramId", uc.GetByTelegramID)
 	group.GET("/users/username/:username", uc.GetByUsername)
+	group.GET("/users/by-wallet/:number", uc.GetByWalletNumber)
+
 }

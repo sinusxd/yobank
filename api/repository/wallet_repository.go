@@ -49,3 +49,27 @@ func (r *walletRepository) GenerateWalletNumber() string {
 func (r *walletRepository) CreateWithTx(tx *gorm.DB, wallet *domain.Wallet) error {
 	return tx.Create(wallet).Error
 }
+
+func (r *walletRepository) GetByIDTx(tx *gorm.DB, id uint) (*domain.Wallet, error) {
+	var wallet domain.Wallet
+	if err := tx.First(&wallet, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return &wallet, nil
+}
+
+func (r *walletRepository) UpdateWithTx(tx *gorm.DB, wallet *domain.Wallet) error {
+	return tx.Save(wallet).Error
+}
+
+func (r *walletRepository) GetByNumber(ctx context.Context, number string) (*domain.Wallet, error) {
+	var wallet domain.Wallet
+	err := r.db.WithContext(ctx).
+		Where("number = ?", number).
+		First(&wallet).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return &wallet, nil
+}

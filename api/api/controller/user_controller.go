@@ -90,3 +90,15 @@ func (uc *UserController) GetByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, user)
 }
+
+func (uc *UserController) GetByWalletNumber(c *gin.Context) {
+	number := c.Param("number")
+
+	user, err := uc.UserService.GetUserInfoByWalletNumber(c.Request.Context(), number)
+	if err != nil {
+		c.JSON(http.StatusNotFound, domain.ErrorResponse{Message: "Пользователь не найден"})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+}

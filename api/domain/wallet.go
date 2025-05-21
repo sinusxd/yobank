@@ -52,6 +52,9 @@ type WalletRepository interface {
 	CreateWithTx(tx *gorm.DB, wallet *Wallet) error
 	Update(ctx context.Context, wallet *Wallet) error
 	GenerateWalletNumber() string
+	GetByIDTx(tx *gorm.DB, id uint) (*Wallet, error)
+	UpdateWithTx(tx *gorm.DB, wallet *Wallet) error
+	GetByNumber(ctx context.Context, number string) (*Wallet, error)
 }
 
 type WalletService interface {

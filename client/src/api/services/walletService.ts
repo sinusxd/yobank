@@ -28,4 +28,10 @@ export default class WalletService {
         });
         return response.data;
     }
+
+    static async getWalletsByUserId(userId: number): Promise<Wallet[]> {
+        const response: AxiosResponse<Wallet[]> = await api.get(`/api/v1/wallets/user/${userId}`);
+        return response.data;
+    }
+
 }

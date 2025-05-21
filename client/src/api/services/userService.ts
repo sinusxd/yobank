@@ -37,4 +37,10 @@ export default class UserService {
         const response: AxiosResponse<User> = await api.get(`/api/v1/users/username/${username}`);
         return response.data;
     }
+
+    static async getByWalletNumber(walletNumber: string): Promise<User> {
+        const response: AxiosResponse<User> = await api.get(`/api/v1/users/by-wallet/${walletNumber}`);
+        return response.data;
+    }
+
 }

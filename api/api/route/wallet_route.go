@@ -14,6 +14,7 @@ func NewWalletRouter(walletService domain.WalletService, authGroup *gin.RouterGr
 
 	// Маршруты для работы с кошельком (требуют авторизации)
 	authGroup.GET("/wallet", wc.GetUserWallet)
+	authGroup.GET("/wallets/user/:id", wc.GetByUserID)
 	authGroup.POST("/wallet", wc.CreateWallet)
 	authGroup.POST("/wallet/init", wc.InitWallet)
 	authGroup.POST("/wallet/topup", wc.TopUpWallet)

@@ -16,6 +16,7 @@ type Services struct {
 	Wallet    domain.WalletService
 	User      domain.UserService
 	Rate      domain.RateService
+	Transfer  domain.TransferService
 }
 
 type Repositories struct {
@@ -23,6 +24,7 @@ type Repositories struct {
 	EmailCode domain.EmailCodeRepository
 	Wallet    domain.WalletRepository
 	Rate      domain.RateRepository
+	Transfer  domain.TransferRepository
 }
 
 type Container struct {
@@ -37,6 +39,7 @@ func BuildContainer(db *gorm.DB, cfg *Env) Container {
 	emailCodeRepo := repository.NewEmailCodeRepository(db)
 	walletRepo := repository.NewWalletRepository(db)
 	rateRepo := repository.NewRateRepository(db)
+	transferRepo := repository.NewTransferRepository(db)
 
 	// Mailer
 	mail := mailer.NewGoMailer(
@@ -53,6 +56,7 @@ func BuildContainer(db *gorm.DB, cfg *Env) Container {
 	walletService := service.NewWalletService(walletRepo, timeout)
 	userService := service.NewUserService(db, userRepo, walletRepo)
 	rateService := service.NewRateService(rateRepo, timeout)
+	transferService := service.NewTransferService(db, walletRepo, transferRepo, timeout)
 
 	return Container{
 		Services: Services{
@@ -61,12 +65,14 @@ func BuildContainer(db *gorm.DB, cfg *Env) Container {
 			Wallet:    walletService,
 			User:      userService,
 			Rate:      rateService,
+			Transfer:  transferService,
 		},
 		Repos: Repositories{
 			User:      userRepo,
 			EmailCode: emailCodeRepo,
 			Wallet:    walletRepo,
 			Rate:      rateRepo,
+			Transfer:  transferRepo,
 		},
 	}
 }

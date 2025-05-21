@@ -32,7 +32,7 @@ func newPostgresDB(cfg Config) (*gorm.DB, error) {
 func runMigrations(db *gorm.DB) error {
 	log.Println("Running database migrations...")
 
-	err := db.AutoMigrate(&domain.User{}, &domain.EmailLoginCode{}, &domain.Wallet{}, &domain.Rate{})
+	err := db.AutoMigrate(&domain.User{}, &domain.EmailLoginCode{}, &domain.Wallet{}, &domain.Rate{}, &domain.Transfer{})
 	if err != nil {
 		log.Printf("Error running migrations: %v\n", err)
 		return err

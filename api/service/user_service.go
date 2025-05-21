@@ -106,7 +106,7 @@ func (s *userService) GetUserInfoByID(ctx context.Context, userID uint) (*domain
 	if err != nil {
 		return nil, fmt.Errorf("пользователь не найден: %w", err)
 	}
-	return &user, nil
+	return user, nil
 }
 
 func (s *userService) GetUserInfoByEmail(ctx context.Context, email string) (*domain.User, error) {
@@ -131,4 +131,12 @@ func (s *userService) GetByUsername(ctx context.Context, username string) (*doma
 		return nil, fmt.Errorf("пользователь не найден: %w", err)
 	}
 	return &user, nil
+}
+
+func (s *userService) GetUserInfoByWalletNumber(ctx context.Context, walletNumber string) (*domain.User, error) {
+	wallet, err := s.WalletRepo.GetByNumber(ctx, walletNumber)
+	if err != nil {
+		return nil, fmt.Errorf("кошелек не найден: %w", err)
+	}
+	return s.UserRepo.GetByID(ctx, strconv.FormatUint(uint64(wallet.UserID), 10))
 }

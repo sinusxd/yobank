@@ -121,3 +121,20 @@ func (wc *WalletController) TopUpWallet(c *gin.Context) {
 
 	c.JSON(http.StatusOK, updatedWallet)
 }
+
+func (wc *WalletController) GetByUserID(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: "Некорректный ID"})
+		return
+	}
+
+	wallets, err := wc.WalletService.GetWalletByUserID(c.Request.Context(), uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, domain.ErrorResponse{Message: "Кошельки не найдены"})
+		return
+	}
+
+	c.JSON(http.StatusOK, domain.WalletsToResponse(wallets))
+}

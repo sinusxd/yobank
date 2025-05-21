@@ -51,19 +51,19 @@ func (r *userRepository) GetByEmail(c context.Context, email string) (domain.Use
 	return user, nil
 }
 
-func (r *userRepository) GetByID(c context.Context, id string) (domain.User, error) {
+func (r *userRepository) GetByID(c context.Context, id string) (*domain.User, error) {
 	uid, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
-		return domain.User{}, err
+		return nil, err
 	}
 
 	var user domain.User
 	result := r.db.First(&user, uint(uid))
 	if result.Error != nil {
-		return domain.User{}, result.Error
+		return nil, result.Error
 	}
 
-	return user, nil
+	return &user, nil
 }
 
 func (r *userRepository) GetByTelegramID(c context.Context, tgID int64) (domain.User, error) {
