@@ -108,3 +108,27 @@ func (s *userService) GetUserInfoByID(ctx context.Context, userID uint) (*domain
 	}
 	return &user, nil
 }
+
+func (s *userService) GetUserInfoByEmail(ctx context.Context, email string) (*domain.User, error) {
+	user, err := s.UserRepo.GetByEmail(ctx, email)
+	if err != nil {
+		return nil, fmt.Errorf("пользователь не найден: %w", err)
+	}
+	return &user, nil
+}
+
+func (s *userService) GetUserInfoByTelegramID(ctx context.Context, tgID int64) (*domain.User, error) {
+	user, err := s.UserRepo.GetByTelegramID(ctx, tgID)
+	if err != nil {
+		return nil, fmt.Errorf("пользователь не найден: %w", err)
+	}
+	return &user, nil
+}
+
+func (s *userService) GetUserInfoByUsername(ctx context.Context, username string) (*domain.User, error) {
+	user, err := s.UserRepo.GetByUsername(ctx, username)
+	if err != nil {
+		return nil, fmt.Errorf("пользователь не найден: %w", err)
+	}
+	return &user, nil
+}

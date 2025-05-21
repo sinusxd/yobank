@@ -66,9 +66,9 @@ func (r *userRepository) GetByID(c context.Context, id string) (domain.User, err
 	return user, nil
 }
 
-func (ur *userRepository) GetByTelegramID(c context.Context, tgID int64) (domain.User, error) {
+func (r *userRepository) GetByTelegramID(c context.Context, tgID int64) (domain.User, error) {
 	var user domain.User
-	result := ur.db.WithContext(c).Where("telegram_id = ?", tgID).First(&user)
+	result := r.db.WithContext(c).Where("telegram_id = ?", tgID).First(&user)
 	return user, result.Error
 }
 
@@ -78,4 +78,10 @@ func (r *userRepository) GetByTelegramIDWithTx(tx *gorm.DB, tgID int64) (*domain
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *userRepository) GetByUsername(ctx context.Context, username string) (domain.User, error) {
+	var user domain.User
+	err := r.db.WithContext(ctx).Preload("Wallets").Where("username = ?", username).First(&user).Error
+	return user, err
 }

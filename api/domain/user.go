@@ -31,9 +31,13 @@ type UserRepository interface {
 	GetByID(c context.Context, id string) (User, error)
 	GetByTelegramID(c context.Context, tgID int64) (User, error)
 	GetByTelegramIDWithTx(tx *gorm.DB, tgID int64) (*User, error)
+	GetByUsername(ctx context.Context, username string) (User, error)
 }
 
 type UserService interface {
 	CreateUserWithWallet(ctx context.Context, tgUser initdata.User) (*User, error)
 	GetUserInfoByID(ctx context.Context, userID uint) (*User, error)
+	GetUserInfoByEmail(ctx context.Context, email string) (*User, error)
+	GetUserInfoByTelegramID(ctx context.Context, tgID int64) (*User, error)
+	GetByUsername(ctx context.Context, username string) (User, error)
 }
