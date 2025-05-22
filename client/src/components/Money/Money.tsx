@@ -7,20 +7,21 @@ import {
     InlineButtons,
     LargeTitle,
     List,
+    Modal,
     Placeholder,
     Section,
     Skeleton,
     Text,
-    Title
+    Title,
 } from "@telegram-apps/telegram-ui";
-import {
-    InlineButtonsItem
-} from "@telegram-apps/telegram-ui/dist/components/Blocks/InlineButtons/components/InlineButtonsItem/InlineButtonsItem";
+import {InlineButtonsItem} from "@telegram-apps/telegram-ui/dist/components/Blocks/InlineButtons/components/InlineButtonsItem/InlineButtonsItem";
 import {Icon16AddCircle, Icon32SendCircle} from "@vkontakte/icons";
 import {Icon24QR} from "@telegram-apps/telegram-ui/dist/icons/24/qr";
+import {Icon28Close} from "@telegram-apps/telegram-ui/dist/icons/28/close";
 import {initDataState as _initDataState, qrScanner, useSignal} from "@telegram-apps/sdk-react";
 import WalletService, {Wallet} from "@/api/services/walletService.ts";
 import RateService from "@/api/services/rateService.ts";
+import moneyGif from "./money.gif"
 import {
     convertToRub,
     formatBalance,
@@ -30,17 +31,18 @@ import {
     sumAllWalletsInRub,
 } from "@/utils/currency.ts";
 import {useNavigate} from "react-router-dom";
+import { ModalHeader } from "@telegram-apps/telegram-ui/dist/components/Overlays/Modal/components/ModalHeader/ModalHeader";
+import {ModalClose} from "@telegram-apps/telegram-ui/dist/components/Overlays/Modal/components/ModalClose/ModalClose";
 
 export const Money: FC = () => {
     const initDataState = useSignal(_initDataState);
     const user = initDataState?.user;
     const [wallets, setWallets] = useState<Wallet[] | null>(null);
     const [rates, setRates] = useState<Record<string, number>>({});
-    const [loading, setLoading] = useState<boolean>(false);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
 
-    // Получаем кошельки и курсы при загрузке компонента
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -59,7 +61,7 @@ export const Money: FC = () => {
                     'CNY': cnyRate.value,
                 });
                 setError(null);
-            } catch (err) {
+            } catch {
                 setError('Ошибка загрузки данных');
             } finally {
                 setLoading(false);
@@ -70,8 +72,8 @@ export const Money: FC = () => {
 
     const openQr = async () => {
         if (qrScanner.open.isAvailable()) {
-            let promise = qrScanner.open({text: 'Scan any QR'});
-            await promise.then(res => console.log(res));
+            const res = await qrScanner.open({text: 'Scan any QR'});
+            console.log(res);
         }
     };
 
@@ -80,21 +82,21 @@ export const Money: FC = () => {
             <Cell
                 before={
                     <Avatar
-                        alt={'Telegram logo'}
+                        alt="Telegram logo"
                         src={user?.photo_url}
                     />
                 }
             />
             <Placeholder
-                header={'Баланс кошелька'}
+                header="Баланс кошелька"
                 description={
-                    <Skeleton visible={loading} withoutAnimation={false}>
-                        <LargeTitle weight={'1'} style={{color: 'var(--tgui--text_color)'}}>
+                    <Skeleton visible={loading}>
+                        <LargeTitle weight="1" style={{color: 'var(--tgui--text_color)'}}>
                             {loading ? '' : `${sumAllWalletsInRub(wallets, rates).toFixed(2)} ₽`}
                         </LargeTitle>
                     </Skeleton>
-                }>
-            </Placeholder>
+                }
+            />
 
             <InlineButtons mode="bezeled">
                 <InlineButtonsItem text="Отправить" onClick={() => navigate("/transfer-money")}>
@@ -119,37 +121,57 @@ export const Money: FC = () => {
             {wallets && wallets.length > 0 && (
                 <Section header="Ваши счета">
                     {wallets.map(wallet => (
-                        <Cell
+                        <Modal
                             key={wallet.id}
-                            subtitle={
-                                <Text>
-                                    {rates[wallet.currency].toFixed(2)} {mapCurrencyToSymbol(wallet.currency)}
-                                </Text>
+                            header={
+                                <ModalHeader after={<ModalClose><Icon28Close style={{color: 'var(--tgui--plain_foreground)'}} /></ModalClose>}>
+                                    {mapCurrencyToName(wallet.currency)}
+                                </ModalHeader>
                             }
-                            before={
-                                <Image
-                                    src={mapCurrencyToLogo(wallet.currency)}
-                                    style={{boxShadow: "none", backgroundColor: "transparent"}}
-                                />
-                            }
-                            after={
-                                <Info
-                                    type={'text'}
-                                    subtitle={`${convertToRub(wallet.balance, rates, wallet.currency)} ${mapCurrencyToSymbol('RUB')}`}
+                            trigger={
+                                <Cell
+                                    subtitle={
+                                        <Text>
+                                            {rates[wallet.currency].toFixed(2)} {mapCurrencyToSymbol(wallet.currency)}
+                                        </Text>
+                                    }
+                                    before={
+                                        <Image
+                                            src={mapCurrencyToLogo(wallet.currency)}
+                                            style={{boxShadow: "none", backgroundColor: "transparent"}}
+                                        />
+                                    }
+                                    after={
+                                        <Info
+                                            type="text"
+                                            subtitle={`${convertToRub(wallet.balance, rates, wallet.currency)} ₽`}
+                                        >
+                                            {formatBalance(wallet.balance)} {mapCurrencyToSymbol(wallet.currency)}
+                                        </Info>
+                                    }
                                 >
-                                    {`${formatBalance(wallet.balance)} ${mapCurrencyToSymbol(wallet.currency)}`}
-                                </Info>
-
+                                    <Title level="3">{mapCurrencyToName(wallet.currency)}</Title>
+                                </Cell>
                             }
                         >
-                            <Title level="3">
-                                {mapCurrencyToName(wallet.currency)}
-                            </Title>
-                        </Cell>
+                            <Placeholder
+                                header={`Баланс: ${formatBalance(wallet.balance)} ${mapCurrencyToSymbol(wallet.currency)}`}
+                                description={`В рублях: ${convertToRub(wallet.balance, rates, wallet.currency)} ₽`}
+                            >
+                                <img
+                                    alt="Telegram sticker"
+                                    src={moneyGif}
+                                    style={{
+                                        display: 'block',
+                                        height: '144px',
+                                        width: '144px'
+                                    }}
+                                />
+                            </Placeholder>
+                        </Modal>
                     ))}
                 </Section>
             )}
-
         </List>
     );
-}
+};
