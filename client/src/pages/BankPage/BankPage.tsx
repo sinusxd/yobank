@@ -26,7 +26,10 @@ export const BankPage: FC = () => {
 
     return (
         <Page back>
-            {renderContent()}
+            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 80 }}>
+                {renderContent()}
+            </div>
+
             <Tabbar style={{paddingBottom: "20px"}}>
                 {[
                     <Tabbar.Item
