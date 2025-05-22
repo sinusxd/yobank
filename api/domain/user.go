@@ -10,12 +10,13 @@ import (
 type User struct {
 	ID                uint     `gorm:"primaryKey" json:"id"`
 	Email             *string  `gorm:"uniqueIndex" json:"email"`
-	Username          string   `gorm:"uniqueIndex;not null" json:"username"` // для логики приложения
+	Username          string   `gorm:"uniqueIndex;not null" json:"username"`
 	TelegramID        *int64   `gorm:"uniqueIndex" json:"telegramId"`
 	TelegramUsername  *string  `json:"telegramUsername"` // raw Telegram username
 	TelegramFirstName *string  `json:"telegramFirstName"`
 	Wallets           []Wallet `gorm:"foreignKey:UserID"`
-	AvatarURL         *string  `gorm:"type:text" json:"avatarUrl"` // ← добавлено
+	AvatarURL         *string  `gorm:"type:text" json:"avatarUrl"`
+	Notification      bool     `gorm:"default:true" json:"notification"`
 	Friends           []Friend `gorm:"foreignKey:UserID"`
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
@@ -31,6 +32,7 @@ type UserRepository interface {
 	GetByTelegramID(c context.Context, tgID int64) (User, error)
 	GetByTelegramIDWithTx(tx *gorm.DB, tgID int64) (*User, error)
 	GetByUsername(ctx context.Context, username string) (User, error)
+	Update(ctx context.Context, user *User) error
 }
 
 type UserService interface {
@@ -40,4 +42,5 @@ type UserService interface {
 	GetUserInfoByTelegramID(ctx context.Context, tgID int64) (*User, error)
 	GetByUsername(ctx context.Context, username string) (*User, error)
 	GetUserInfoByWalletNumber(ctx context.Context, walletNumber string) (*User, error)
+	Update(ctx context.Context, user *User) error
 }

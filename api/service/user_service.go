@@ -141,3 +141,7 @@ func (s *userService) GetUserInfoByWalletNumber(ctx context.Context, walletNumbe
 	}
 	return s.UserRepo.GetByID(ctx, strconv.FormatUint(uint64(wallet.UserID), 10))
 }
+
+func (s *userService) Update(ctx context.Context, user *domain.User) error {
+	return s.UserRepo.Update(ctx, user)
+}

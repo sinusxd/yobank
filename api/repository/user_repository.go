@@ -85,3 +85,7 @@ func (r *userRepository) GetByUsername(ctx context.Context, username string) (do
 	err := r.db.WithContext(ctx).Preload("Wallets").Where("username = ?", username).First(&user).Error
 	return user, err
 }
+
+func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
+	return r.db.WithContext(ctx).Save(user).Error
+}

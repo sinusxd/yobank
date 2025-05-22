@@ -102,3 +102,37 @@ func (uc *UserController) GetByWalletNumber(c *gin.Context) {
 
 	c.JSON(http.StatusOK, user)
 }
+
+type toggleNotificationRequest struct {
+	Enable bool `json:"enable"`
+}
+
+func (uc *UserController) ToggleNotification(c *gin.Context) {
+	idStr := c.Param("id")
+	userID, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: "Неверный ID пользователя"})
+		return
+	}
+
+	var req toggleNotificationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: "Некорректный формат запроса"})
+		return
+	}
+
+	user, err := uc.UserService.GetUserInfoByID(c.Request.Context(), uint(userID))
+	if err != nil {
+		c.JSON(http.StatusNotFound, domain.ErrorResponse{Message: "Пользователь не найден"})
+		return
+	}
+
+	user.Notification = req.Enable
+
+	if err := uc.UserService.Update(c.Request.Context(), user); err != nil {
+		c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Не удалось обновить уведомления"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "notification": user.Notification})
+}

@@ -53,10 +53,10 @@ func BuildContainer(db *gorm.DB, cfg *Env) Container {
 	// UseCases / Services
 	emailCodeService := service.NewEmailCodeService(emailCodeRepo, mail, timeout)
 	loginService := service.NewLoginService(userRepo, timeout)
-	walletService := service.NewWalletService(walletRepo, userRepo, timeout)
+	walletService := service.NewWalletService(walletRepo, userRepo, mail, timeout)
 	userService := service.NewUserService(db, userRepo, walletRepo)
 	rateService := service.NewRateService(rateRepo, timeout)
-	transferService := service.NewTransferService(db, walletRepo, transferRepo, userRepo, timeout)
+	transferService := service.NewTransferService(db, walletRepo, transferRepo, userRepo, mail, timeout)
 
 	return Container{
 		Services: Services{

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 	"yobank/domain"
+	"yobank/internal/mailer"
 	"yobank/internal/telegram"
 
 	"gorm.io/gorm"
@@ -14,13 +15,15 @@ import (
 type walletService struct {
 	walletRepository domain.WalletRepository
 	userRepository   domain.UserRepository
+	mailer           *mailer.GoMailer
 	contextTimeout   time.Duration
 }
 
-func NewWalletService(walletRepository domain.WalletRepository, userRepository domain.UserRepository, timeout time.Duration) domain.WalletService {
+func NewWalletService(walletRepository domain.WalletRepository, userRepository domain.UserRepository, mailer *mailer.GoMailer, timeout time.Duration) domain.WalletService {
 	return &walletService{
 		walletRepository: walletRepository,
 		userRepository:   userRepository,
+		mailer:           mailer,
 		contextTimeout:   timeout,
 	}
 }
@@ -131,8 +134,14 @@ func (w *walletService) TopUpWallet(ctx context.Context, userID uint, currency s
 
 	// Уведомление пользователя
 	user, err := w.userRepository.GetByID(ctx, fmt.Sprint(userID))
-	if err == nil && user.TelegramID != nil {
-		telegram.NotifyTopUp(*user.TelegramID, amount, currency)
+	if err == nil && user.Notification {
+		// Telegram-уведомление
+		if user.TelegramID != nil {
+			go telegram.NotifyTopUp(*user.TelegramID, amount, currency)
+		} else if user.Email != nil && *user.Email != "" {
+			// Email-уведомление
+			go w.mailer.SendTopUpNotification(*user.Email, amount, currency)
+		}
 	}
 
 	return *target, nil

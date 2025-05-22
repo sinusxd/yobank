@@ -9,6 +9,7 @@ export interface User {
     telegramUsername: string | null;
     telegramFirstName: string | null;
     avatarUrl: string | null;
+    notification: boolean
     createdAt: string;
     updatedAt: string;
 }
@@ -43,5 +44,12 @@ export default class UserService {
         const response: AxiosResponse<User> = await api.get(`/api/v1/users/by-wallet/${walletNumber}`);
         return response.data;
     }
+
+    static async toggleNotification(userId: number, enable: boolean): Promise<void> {
+        await api.put(`/api/v1/users/${userId}/notifications`, {
+            enable
+        });
+    }
+
 
 }

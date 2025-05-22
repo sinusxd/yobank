@@ -1,4 +1,4 @@
-import {FC, useState} from "react";
+import { FC, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Button,
@@ -8,26 +8,46 @@ import {
     Spinner,
     Switch,
     Text,
-    Title
+    Title,
 } from "@telegram-apps/telegram-ui";
-import { useSelector } from "react-redux";
-import {RootState} from "@/store/store.ts";
-import {Link} from "@/components/Link/Link.tsx";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/store/store.ts";
+import { Link } from "@/components/Link/Link.tsx";
+import UserService from "@/api/services/userService.ts";
+import {setUser} from "@/store/userSlice.ts";
 
 export const SettingsPage: FC = () => {
     const navigate = useNavigate();
-
-    const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(
-        localStorage.getItem("notifications-enabled") === "true"
-    );
+    const dispatch = useDispatch();
 
     const user = useSelector((state: RootState) => state.user);
     const loading = user === null;
 
-    const handleToggleNotifications = () => {
+    const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(false);
+    const [updating, setUpdating] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (user) {
+            setNotificationsEnabled(user.notification ?? false);
+        }
+    }, [user]);
+
+    const handleToggleNotifications = async () => {
+        if (!user) return;
+
         const newValue = !notificationsEnabled;
         setNotificationsEnabled(newValue);
-        sessionStorage.setItem("notifications-enabled", String(newValue));
+        setUpdating(true);
+
+        try {
+            await UserService.toggleNotification(user.id, newValue);
+            dispatch(setUser({ ...user, notification: newValue }));
+        } catch (error) {
+            alert("Не удалось обновить уведомления");
+            setNotificationsEnabled(!newValue); // откат
+        } finally {
+            setUpdating(false);
+        }
     };
 
     const handleLogout = () => {
@@ -57,6 +77,7 @@ export const SettingsPage: FC = () => {
                             after={
                                 <Switch
                                     checked={notificationsEnabled}
+                                    disabled={updating}
                                     onChange={handleToggleNotifications}
                                 />
                             }

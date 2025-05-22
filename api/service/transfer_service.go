@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 	"yobank/domain"
+	"yobank/internal/mailer"
 	"yobank/internal/telegram"
 )
 
@@ -15,6 +16,7 @@ type transferService struct {
 	walletRepository domain.WalletRepository
 	transferRepo     domain.TransferRepository
 	userRepo         domain.UserRepository
+	mailer           *mailer.GoMailer
 	contextTimeout   time.Duration
 }
 
@@ -23,6 +25,7 @@ func NewTransferService(
 	walletRepo domain.WalletRepository,
 	transferRepo domain.TransferRepository,
 	userRepo domain.UserRepository,
+	mailer *mailer.GoMailer,
 	timeout time.Duration,
 ) domain.TransferService {
 	return &transferService{
@@ -30,6 +33,7 @@ func NewTransferService(
 		walletRepository: walletRepo,
 		transferRepo:     transferRepo,
 		userRepo:         userRepo,
+		mailer:           mailer,
 		contextTimeout:   timeout,
 	}
 }
@@ -92,7 +96,8 @@ func (s *transferService) MakeTransfer(ctx context.Context, senderWalletID, rece
 	receiverWallet, err := s.walletRepository.GetByID(ctx, transfer.ReceiverWalletID)
 	if err == nil {
 		receiverUser, err := s.userRepo.GetByID(ctx, strconv.Itoa(int(receiverWallet.UserID)))
-		if err == nil && receiverUser.TelegramID != nil {
+		if err == nil && receiverUser.Notification {
+			// Получаем отправителя
 			senderWallet, _ := s.walletRepository.GetByID(ctx, transfer.SenderWalletID)
 			senderUser, _ := s.userRepo.GetByID(ctx, strconv.Itoa(int(senderWallet.UserID)))
 
@@ -101,7 +106,13 @@ func (s *transferService) MakeTransfer(ctx context.Context, senderWalletID, rece
 				senderUsername = senderUser.Username
 			}
 
-			telegram.NotifyTransfer(*receiverUser.TelegramID, senderUsername, transfer.Amount, transfer.Currency, senderUser.TelegramID != nil)
+			if receiverUser.TelegramID != nil {
+				// Telegram-уведомление
+				go telegram.NotifyTransfer(*receiverUser.TelegramID, senderUsername, transfer.Amount, transfer.Currency, senderUser.TelegramID != nil)
+			} else if receiverUser.Email != nil && *receiverUser.Email != "" {
+				// Email-уведомление
+				go s.mailer.SendTransferNotification(*receiverUser.Email, senderUsername, transfer.Amount, transfer.Currency)
+			}
 		}
 	}
 
