@@ -3,20 +3,24 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 	"yobank/domain"
+	"yobank/internal/telegram"
 
 	"gorm.io/gorm"
 )
 
 type walletService struct {
 	walletRepository domain.WalletRepository
+	userRepository   domain.UserRepository
 	contextTimeout   time.Duration
 }
 
-func NewWalletService(walletRepository domain.WalletRepository, timeout time.Duration) domain.WalletService {
+func NewWalletService(walletRepository domain.WalletRepository, userRepository domain.UserRepository, timeout time.Duration) domain.WalletService {
 	return &walletService{
 		walletRepository: walletRepository,
+		userRepository:   userRepository,
 		contextTimeout:   timeout,
 	}
 }
@@ -123,6 +127,12 @@ func (w *walletService) TopUpWallet(ctx context.Context, userID uint, currency s
 
 	if err := w.walletRepository.Update(ctx, target); err != nil {
 		return domain.Wallet{}, err
+	}
+
+	// Уведомление пользователя
+	user, err := w.userRepository.GetByID(ctx, fmt.Sprint(userID))
+	if err == nil && user.TelegramID != nil {
+		telegram.NotifyTopUp(*user.TelegramID, amount, currency)
 	}
 
 	return *target, nil

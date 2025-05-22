@@ -60,3 +60,17 @@ func NotifyTransfer(tgID int64, senderUsername string, amount int64, currency st
 		log.Printf("Не удалось отправить уведомление пользователю %d: %v", tgID, err)
 	}
 }
+
+func NotifyTopUp(tgID int64, amount int64, currency string) {
+	if BotInstance == nil {
+		log.Println("BotInstance не инициализирован")
+		return
+	}
+
+	text := fmt.Sprintf("💰 Ваш кошелёк был пополнен на %.2f %s", float64(amount)/100, currency)
+
+	msg := tgbotapi.NewMessage(tgID, text)
+	if _, err := BotInstance.Send(msg); err != nil {
+		log.Printf("Ошибка отправки уведомления о пополнении: %v", err)
+	}
+}

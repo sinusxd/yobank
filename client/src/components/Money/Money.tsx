@@ -83,7 +83,7 @@ export const Money: FC = () => {
                 before={
                     <Avatar
                         alt="Telegram logo"
-                        src={user?.photo_url}
+                        src={user?.photo_url || `https://avatars.githubusercontent.com/u/${10 % 1000000}?v=4`}
                     />
                 }
             />

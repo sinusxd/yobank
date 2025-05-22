@@ -206,7 +206,7 @@ export const TransferMethodPage: FC = () => {
                 {loading && <Spinner size="l" />}
                 {receiver && (
                     <Cell
-                        before={<Avatar fallbackIcon={<span>😕</span>} />}
+                        before={<Avatar src={receiver.avatarUrl || `https://avatars.githubusercontent.com/u/${receiver.id % 1000000}?v=4`} fallbackIcon={<span>😕</span>} />}
                         subtitle={<Text color="secondary">{receiver.email || receiver.telegramUsername}</Text>}
                     >
                         {receiver.telegramFirstName || receiver.username}
