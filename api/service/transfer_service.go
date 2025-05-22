@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 	"yobank/domain"
+	"yobank/internal/telegram"
 )
 
 type transferService struct {
@@ -83,7 +84,28 @@ func (s *transferService) MakeTransfer(ctx context.Context, senderWalletID, rece
 		return nil
 	})
 
-	return transfer, err
+	if err != nil {
+		return transfer, err
+	}
+
+	// Оповещение получателя
+	receiverWallet, err := s.walletRepository.GetByID(ctx, transfer.ReceiverWalletID)
+	if err == nil {
+		receiverUser, err := s.userRepo.GetByID(ctx, strconv.Itoa(int(receiverWallet.UserID)))
+		if err == nil && receiverUser.TelegramID != nil {
+			senderWallet, _ := s.walletRepository.GetByID(ctx, transfer.SenderWalletID)
+			senderUser, _ := s.userRepo.GetByID(ctx, strconv.Itoa(int(senderWallet.UserID)))
+
+			senderUsername := "неизвестно"
+			if senderUser.Username != "" {
+				senderUsername = senderUser.Username
+			}
+
+			telegram.NotifyTransfer(*receiverUser.TelegramID, senderUsername, transfer.Amount, transfer.Currency, senderUser.TelegramID != nil)
+		}
+	}
+
+	return transfer, nil
 }
 
 func (s *transferService) GetHistoryByWalletID(ctx context.Context, walletID uint) ([]domain.Transfer, error) {

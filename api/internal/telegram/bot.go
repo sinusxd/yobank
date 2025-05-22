@@ -43,13 +43,17 @@ func StartBot(token string, webAppURL string) {
 	}
 }
 
-func NotifyTransfer(tgID int64, senderUsername string, amount int64, currency string) {
+func NotifyTransfer(tgID int64, senderUsername string, amount int64, currency string, senderFromTg bool) {
 	if BotInstance == nil {
 		log.Println("Bot not initialized")
 		return
 	}
-
-	text := fmt.Sprintf("💸 Вы получили перевод от @%s на сумму %.2f %s", senderUsername, float64(amount)/100, currency)
+	text := ""
+	if senderFromTg {
+		text = fmt.Sprintf("💸 Вы получили перевод от @%s на сумму %.2f %s", senderUsername, float64(amount)/100, currency)
+	} else {
+		text = fmt.Sprintf("💸 Вы получили перевод от %s на сумму %.2f %s", senderUsername, float64(amount)/100, currency)
+	}
 
 	msg := tgbotapi.NewMessage(tgID, text)
 	if _, err := BotInstance.Send(msg); err != nil {
