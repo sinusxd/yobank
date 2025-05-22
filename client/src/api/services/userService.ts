@@ -8,6 +8,7 @@ export interface User {
     telegramId: number | null;
     telegramUsername: string | null;
     telegramFirstName: string | null;
+    avatarUrl: string | null;
     createdAt: string;
     updatedAt: string;
 }

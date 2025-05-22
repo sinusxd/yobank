@@ -73,3 +73,14 @@ func (r *walletRepository) GetByNumber(ctx context.Context, number string) (*dom
 	}
 	return &wallet, nil
 }
+
+func (r *walletRepository) GetByID(ctx context.Context, id uint) (*domain.Wallet, error) {
+	var wallet domain.Wallet
+	err := r.db.WithContext(ctx).
+		Where("id = ?", id).
+		First(&wallet).Error
+	if err != nil {
+		return nil, err
+	}
+	return &wallet, nil
+}

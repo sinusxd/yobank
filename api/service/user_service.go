@@ -43,6 +43,7 @@ func (s *userService) CreateUserWithWallet(ctx context.Context, tgUser initdata.
 			TelegramUsername:  &tgUser.Username,
 			TelegramFirstName: &tgUser.FirstName,
 			Username:          tgUser.Username,
+			AvatarURL:         &tgUser.PhotoURL,
 			Email:             nil,
 		}
 		if err := s.UserRepo.CreateWithTx(tx, user); err != nil {

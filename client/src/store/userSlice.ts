@@ -1,15 +1,22 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import {User} from "@/api/services/userService.ts";
+import { User } from "@/api/services/userService.ts";
 
+// Попытка загрузить user из sessionStorage
+const savedUser = sessionStorage.getItem("user");
+const initialState: User | null = savedUser ? JSON.parse(savedUser) : null;
 
-
-// Главное: явно указать тип состояния в createSlice
 const userSlice = createSlice({
     name: 'user',
-    initialState: null as User | null,
+    initialState,
     reducers: {
-        setUser: (_state, action: PayloadAction<User>) => action.payload,
-        clearUser: () => null,
+        setUser: (_state, action: PayloadAction<User>) => {
+            sessionStorage.setItem("user", JSON.stringify(action.payload));
+            return action.payload;
+        },
+        clearUser: () => {
+            sessionStorage.removeItem("user");
+            return null;
+        },
     },
 });
 

@@ -15,12 +15,11 @@ type User struct {
 	TelegramUsername  *string  `json:"telegramUsername"` // raw Telegram username
 	TelegramFirstName *string  `json:"telegramFirstName"`
 	Wallets           []Wallet `gorm:"foreignKey:UserID"`
-
-	Friends []Friend `gorm:"foreignKey:UserID"`
-
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	AvatarURL         *string  `gorm:"type:text" json:"avatarUrl"` // ← добавлено
+	Friends           []Friend `gorm:"foreignKey:UserID"`
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	DeletedAt         gorm.DeletedAt `gorm:"index"`
 }
 
 type UserRepository interface {

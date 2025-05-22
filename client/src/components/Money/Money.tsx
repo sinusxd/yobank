@@ -21,7 +21,7 @@ import {Icon28Close} from "@telegram-apps/telegram-ui/dist/icons/28/close";
 import {initDataState as _initDataState, qrScanner, useSignal} from "@telegram-apps/sdk-react";
 import WalletService, {Wallet} from "@/api/services/walletService.ts";
 import RateService from "@/api/services/rateService.ts";
-import moneyGif from "./money.gif"
+import moneyGif from "./money.gif";
 import {
     convertToRub,
     formatBalance,
@@ -31,7 +31,7 @@ import {
     sumAllWalletsInRub,
 } from "@/utils/currency.ts";
 import {useNavigate} from "react-router-dom";
-import { ModalHeader } from "@telegram-apps/telegram-ui/dist/components/Overlays/Modal/components/ModalHeader/ModalHeader";
+import {ModalHeader} from "@telegram-apps/telegram-ui/dist/components/Overlays/Modal/components/ModalHeader/ModalHeader";
 import {ModalClose} from "@telegram-apps/telegram-ui/dist/components/Overlays/Modal/components/ModalClose/ModalClose";
 
 export const Money: FC = () => {
@@ -156,7 +156,13 @@ export const Money: FC = () => {
                         >
                             <Placeholder
                                 header={`Баланс: ${formatBalance(wallet.balance)} ${mapCurrencyToSymbol(wallet.currency)}`}
-                                description={`В рублях: ${convertToRub(wallet.balance, rates, wallet.currency)} ₽`}
+                                description={
+                                    <>
+                                        {`В рублях: ${convertToRub(wallet.balance, rates, wallet.currency)} ₽`}
+                                        <br />
+                                        {`Номер карты: ${wallet.number}`}
+                                    </>
+                                }
                             >
                                 <img
                                     alt="Telegram sticker"

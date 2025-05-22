@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"gorm.io/gorm"
+	"strconv"
 	"time"
 	"yobank/domain"
 )
@@ -12,6 +13,7 @@ type transferService struct {
 	db               *gorm.DB
 	walletRepository domain.WalletRepository
 	transferRepo     domain.TransferRepository
+	userRepo         domain.UserRepository
 	contextTimeout   time.Duration
 }
 
@@ -19,12 +21,14 @@ func NewTransferService(
 	db *gorm.DB,
 	walletRepo domain.WalletRepository,
 	transferRepo domain.TransferRepository,
+	userRepo domain.UserRepository,
 	timeout time.Duration,
 ) domain.TransferService {
 	return &transferService{
 		db:               db,
 		walletRepository: walletRepo,
 		transferRepo:     transferRepo,
+		userRepo:         userRepo,
 		contextTimeout:   timeout,
 	}
 }
@@ -87,4 +91,18 @@ func (s *transferService) GetHistoryByWalletID(ctx context.Context, walletID uin
 	defer cancel()
 
 	return s.transferRepo.GetByWalletID(ctx, walletID)
+}
+
+func (s *transferService) GetUserInfoByWalletID(ctx context.Context, walletID uint) (*domain.User, error) {
+	wallet, err := s.walletRepository.GetByID(ctx, walletID)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := s.userRepo.GetByID(ctx, strconv.Itoa(int(wallet.UserID)))
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }

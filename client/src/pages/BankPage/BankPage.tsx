@@ -4,6 +4,7 @@ import {Tabbar} from "@telegram-apps/telegram-ui";
 import {Icon28MoneyHistoryBackwardOutline, Icon28SettingsOutline, Icon28WalletOutline} from "@vkontakte/icons";
 import {Money} from "@/components/Money/Money.tsx";
 import SettingsPage from "@/pages/SettingsPage/SettingsPage.tsx";
+import {TransactionHistory} from "@/components/TransactionHistory/TransactionHistory.tsx";
 
 export const BankPage: FC = () => {
     const [activeTab, setActiveTab] = useState("wallet");
@@ -15,7 +16,7 @@ export const BankPage: FC = () => {
             case "settings":
                 return <SettingsPage/>;
             case "history":
-                return <div style={{padding: "16px"}}>История (в разработке)</div>;
+                return <TransactionHistory/>;
             case "payments":
                 return <div style={{padding: "16px"}}>Платежи (в разработке)</div>;
             default:

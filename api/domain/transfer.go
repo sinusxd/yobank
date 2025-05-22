@@ -7,12 +7,12 @@ import (
 )
 
 type Transfer struct {
-	ID               uint   `gorm:"primaryKey"`
-	SenderWalletID   uint   `gorm:"index;not null"`
-	ReceiverWalletID uint   `gorm:"index;not null"`
-	Amount           int64  `gorm:"not null"`
-	Currency         string `gorm:"size:8;not null"`
-	CreatedAt        time.Time
+	ID               uint      `gorm:"primaryKey" json:"id"`
+	SenderWalletID   uint      `gorm:"index;not null" json:"senderWalletId"`
+	ReceiverWalletID uint      `gorm:"index;not null" json:"receiverWalletId"`
+	Amount           int64     `gorm:"not null" json:"amount"`
+	Currency         string    `gorm:"size:8;not null" json:"currency"`
+	CreatedAt        time.Time `json:"createdAt"`
 }
 
 type TransferResponse struct {
@@ -43,4 +43,5 @@ type TransferRepository interface {
 type TransferService interface {
 	MakeTransfer(ctx context.Context, senderWalletID, receiverWalletID uint, amount int64) (Transfer, error)
 	GetHistoryByWalletID(ctx context.Context, walletID uint) ([]Transfer, error)
+	GetUserInfoByWalletID(ctx context.Context, walletID uint) (*User, error)
 }

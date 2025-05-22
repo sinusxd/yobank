@@ -13,4 +13,6 @@ func NewTransferRouter(transferService domain.TransferService, group *gin.Router
 
 	group.POST("/transfers", tc.CreateTransfer)
 	group.GET("/transfers/wallet/:walletId", tc.GetTransferHistory)
+	group.GET("/transfers/username/:walletId", tc.GetReceiverUsername)
+
 }

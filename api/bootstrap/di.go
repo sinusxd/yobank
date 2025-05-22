@@ -56,7 +56,7 @@ func BuildContainer(db *gorm.DB, cfg *Env) Container {
 	walletService := service.NewWalletService(walletRepo, timeout)
 	userService := service.NewUserService(db, userRepo, walletRepo)
 	rateService := service.NewRateService(rateRepo, timeout)
-	transferService := service.NewTransferService(db, walletRepo, transferRepo, timeout)
+	transferService := service.NewTransferService(db, walletRepo, transferRepo, userRepo, timeout)
 
 	return Container{
 		Services: Services{
