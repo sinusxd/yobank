@@ -12,6 +12,7 @@ import {BankPage} from "@/pages/BankPage/BankPage.tsx";
 import {AddMoneyPage} from "@/pages/AddMoneyPage/AddMoneyPage.tsx";
 import OnlineAddMoneyPage from "@/pages/OnlineAddMoneyPage/OnlineAddMoneyPage.tsx";
 import {TransferMethodPage} from "@/pages/TransferMethodPage/TransferMethodPage.tsx";
+import {AddMoneyQrPage} from "@/pages/AddMoneyQrPage/AddMoneyQrPage.tsx";
 
 interface Route {
     path: string;
@@ -28,6 +29,7 @@ export const routes: Route[] = [
     {path: '/bank', Component: BankPage, title: 'Bank'},
     {path: '/add-money', Component: AddMoneyPage, title: 'Add money'},
     {path: '/add-money/online', Component: OnlineAddMoneyPage, title: 'Add money online'},
+    {path: '/add-money/qr', Component: AddMoneyQrPage, title: 'Add money qr'},
     {path: '/transfer-money', Component: TransferMethodPage, title: 'Transfer money'},
     {path: '/init-data', Component: InitDataPage, title: 'Init Data'},
     {path: '/theme-params', Component: ThemeParamsPage, title: 'Theme Params'},

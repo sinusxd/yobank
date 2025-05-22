@@ -23,9 +23,11 @@
     "dayjs": "^1.11.13",
     "eruda": "^3.4.1",
     "framer-motion": "^12.12.1",
+    "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-currency-flags": "^0.1.2",
     "react-dom": "^18.2.0",
+    "react-qr-code": "^2.0.15",
     "react-redux": "^9.2.0",
     "react-router-dom": "^6.23.0"
   },

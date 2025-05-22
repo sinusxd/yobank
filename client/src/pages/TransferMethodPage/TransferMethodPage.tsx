@@ -4,7 +4,8 @@ import {
     Button,
     Cell,
     Input,
-    List, Section,
+    List,
+    Section,
     Select,
     Spinner,
     Text,
@@ -19,7 +20,7 @@ import UserService, { User } from "@/api/services/userService";
 import WalletService, { Wallet } from "@/api/services/walletService";
 import TransferService from "@/api/services/transferService";
 import { Page } from "@/components/Page";
-import {useNavigate, useSearchParams} from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { mapCurrencyToSymbol } from "@/utils/currency";
 
 type TransferMethod = "email" | "username" | "card";
@@ -30,7 +31,6 @@ const mapMethodToLabel = (method: TransferMethod) => {
         case "email": return "Email";
         case "username": return "Имя пользователя";
         case "card": return "Номер счёта";
-        default: return "";
     }
 };
 
@@ -67,30 +67,29 @@ export const TransferMethodPage: FC = () => {
     const [receiverWalletId, setReceiverWalletId] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const [params] = useSearchParams();
 
     const senderWallet = wallets.find(w => w.id === selectedWalletId);
 
-    const [params] = useSearchParams();
-
+    // 1) Разбор QR-параметров
     useEffect(() => {
-        const methodParam = params.get("method") as TransferMethod | null;
-        const targetParam = params.get("target");
-        const amountParam = params.get("amount");
-
-        if (methodParam && targetParam) {
-            setMethod(methodParam);
-            setTarget(targetParam);
-            if (amountParam) {
-                setAmount(amountParam);
-            }
+        const m = params.get("method") as TransferMethod | null;
+        const t = params.get("target");
+        const a = params.get("amount");
+        if (m && t) {
+            setMethod(m);
+            setTarget(t);
+            if (a) setAmount(a);
             setStep("form");
         }
     }, []);
 
+    // 2) Загрузка своих кошельков
     useEffect(() => {
         WalletService.getUserWallets().then(res => setWallets(res.data));
     }, []);
 
+    // 3) При переходе в форму и наличии target грузим получателя
     useEffect(() => {
         if (step !== "form" || target.length < 3) {
             setReceiver(null);
@@ -98,75 +97,73 @@ export const TransferMethodPage: FC = () => {
             setReceiverWalletId(null);
             return;
         }
-
-        const fetchReceiver = async () => {
-            setLoading(true);
-            try {
-                let user: User;
-                if (method === "email") user = await UserService.getByEmail(target);
-                else if (method === "username") user = await UserService.getByUsername(target);
-                else user = await UserService.getByWalletNumber(target);
-
+        setLoading(true);
+        UserService.getByWalletNumber(target)
+            .then(user => {
                 setReceiver(user);
-
-                const userWallets = await WalletService.getWalletsByUserId(user.id);
-                setReceiverWallets(userWallets);
-
-                if (senderWallet) {
-                    const matched = userWallets.find(w => w.currency === senderWallet.currency);
-                    setReceiverWalletId(matched?.id || null);
-                }
-            } catch {
+                return WalletService.getWalletsByUserId(user.id);
+            })
+            .then(wds => {
+                setReceiverWallets(wds);
+                // автоматический выбор кошелька получателя по номеру
+                const byNum = wds.find(w => w.number === target);
+                setReceiverWalletId(byNum ? byNum.id : null);
+            })
+            .catch(() => {
                 setReceiver(null);
                 setReceiverWallets([]);
                 setReceiverWalletId(null);
-            } finally {
-                setLoading(false);
-            }
-        };
+            })
+            .finally(() => setLoading(false));
+    }, [step, target]);
 
-        fetchReceiver();
-    }, [target, senderWallet, step, method]);
+    // 4) Автовыбор счёта отправителя по валюте выбранного кошелька получателя
+    useEffect(() => {
+        if (!receiverWalletId || wallets.length === 0) return;
+        const recv = receiverWallets.find(w => w.id === receiverWalletId);
+        if (!recv) return;
+        const match = wallets.find(w => w.currency === recv.currency);
+        if (match) setSelectedWalletId(match.id);
+    }, [receiverWalletId, wallets, receiverWallets]);
 
     const handleTransfer = async () => {
         if (!selectedWalletId || !receiverWalletId || !amount) return;
+        const num = parseFloat(amount.replace(",", "."));
+        if (isNaN(num) || num <= 0) {
+            alert("Введите корректную сумму");
+            return;
+        }
         try {
-            const numericAmount = parseFloat(amount.replace(",", "."));
-            if (isNaN(numericAmount) || numericAmount <= 0) {
-                alert("Введите корректную сумму");
-                return;
-            }
-            const amountInMinorUnits = Math.round(numericAmount * 100);
             await TransferService.makeTransfer({
                 senderWalletId: selectedWalletId,
                 receiverWalletId,
-                amount: amountInMinorUnits,
+                amount: Math.round(num * 100),
             });
-            alert("✅ Перевод выполнен успешно");
+            alert("✅ Перевод выполнен");
             navigate("/bank");
         } catch (err: any) {
-            alert(`❌ Ошибка перевода: ${err?.response?.data?.message || "Неизвестная ошибка"}`);
+            alert(`Ошибка: ${err?.response?.data?.message || err.message}`);
         }
     };
 
     if (step === "choose") {
         return (
-            <Page back={true}>
+            <Page back>
                 <List>
-                    <Title style={{ textAlign: "center", marginTop: 40, marginBottom: 20 }} level="1" weight="1">
+                    <Title level="1" weight="1" style={{ textAlign: "center", margin: "40px 0 20px" }}>
                         Куда перевести?
                     </Title>
-                    {METHOD_OPTIONS.map(({ key, label, subtitle, icon }) => (
+                    {METHOD_OPTIONS.map(opt => (
                         <Cell
-                            key={key}
-                            before={icon}
-                            subtitle={<Text color="secondary">{subtitle}</Text>}
+                            key={opt.key}
+                            before={opt.icon}
+                            subtitle={<Text color="secondary">{opt.subtitle}</Text>}
                             onClick={() => {
-                                setMethod(key);
+                                setMethod(opt.key);
                                 setStep("form");
                             }}
                         >
-                            {label}
+                            {opt.label}
                         </Cell>
                     ))}
                 </List>
@@ -175,97 +172,76 @@ export const TransferMethodPage: FC = () => {
     }
 
     return (
-        <Page back={true}>
+        <Page back>
             <List>
-                <Title style={{ textAlign: "center", marginTop: 40, marginBottom: 20 }} level="1" weight="1">
+                <Title level="1" weight="1" style={{ textAlign: "center", margin: "40px 0 20px" }}>
                     Перевод {mapMethodToLabel(method).toLowerCase()}
                 </Title>
 
-                <Cell subtitle={<Text color="secondary">Счёт для списания</Text>}>
+                <Section header="Счёт для списания">
                     <Select
                         value={selectedWalletId?.toString() || ""}
-                        onChange={(e) => setSelectedWalletId(Number(e.target.value))}
+                        onChange={e => setSelectedWalletId(Number(e.target.value))}
                     >
                         <option disabled value="">Выберите счёт</option>
-                        {wallets.map(w => (
+                        {wallets.map(w =>
                             <option key={w.id} value={w.id}>
-                                {w.currency} ({w.number}) • {(w.balance / 100).toFixed(2)} {mapCurrencyToSymbol(w.currency)}
+                                {w.currency} ({w.number}) • {(w.balance/100).toFixed(2)} {mapCurrencyToSymbol(w.currency)}
                             </option>
-                        ))}
+                        )}
                     </Select>
-                </Cell>
-
-                {senderWallet && (
-                    <Section
-                        header={'Выбранный счёт'}
-                        style={{
-                            border: "1px solid var(--tgui--separator_color)",
-                            borderRadius: 12,
-                            padding: 12,
-                            marginBottom: 12
-                        }}
-                    >
-                        <List>
-                            <Cell color="secondary">Валюта: {senderWallet.currency}</Cell>
-                            <Cell color="secondary">Номер: {senderWallet.number}</Cell>
-                            <Cell>Баланс: {(senderWallet.balance / 100).toFixed(2)} {mapCurrencyToSymbol(senderWallet.currency)}</Cell>
-                        </List>
-                    </Section>
-                )}
+                </Section>
 
                 <Input
                     placeholder={mapMethodToLabel(method)}
                     value={target}
-                    onChange={(e) => setTarget(e.target.value)}
-                    style={{ width: "100%", margin: "12px 0" }}
+                    onChange={e => setTarget(e.target.value)}
+                    style={{ margin: "12px 0" }}
                 />
 
                 {loading && <Spinner size="l" />}
+
                 {receiver && (
                     <Cell
-                        before={<Avatar src={receiver.avatarUrl || `https://avatars.githubusercontent.com/u/${receiver.id % 1000000}?v=4`} fallbackIcon={<span>😕</span>} />}
+                        before={<Avatar src={receiver.avatarUrl || `https://avatars.githubusercontent.com/u/${receiver.id % 1000000}?v=4`} />}
                         subtitle={<Text color="secondary">{receiver.email || receiver.telegramUsername}</Text>}
                     >
                         {receiver.telegramFirstName || receiver.username}
                     </Cell>
                 )}
 
-                {receiver && receiverWallets.length > 0 && (
-                    <Cell subtitle={<Text color="secondary">Счёт получателя</Text>}>
+                {receiverWallets.length > 0 && (
+                    <Section header="Счёт получателя">
                         <Select
                             value={receiverWalletId?.toString() || ""}
-                            onChange={(e) => setReceiverWalletId(Number(e.target.value))}
+                            onChange={e => setReceiverWalletId(Number(e.target.value))}
                         >
                             <option disabled value="">Выберите счёт</option>
-                            {receiverWallets
-                                .filter(w => !senderWallet || w.currency === senderWallet.currency)
-                                .map(w => (
-                                    <option key={w.id} value={w.id}>
-                                        {w.currency} ({w.number})
-                                    </option>
-                                ))}
+                            {receiverWallets.map(w =>
+                                <option key={w.id} value={w.id}>
+                                    {w.currency} ({w.number})
+                                </option>
+                            )}
                         </Select>
-                    </Cell>
+                    </Section>
                 )}
 
                 <Input
-                    placeholder="Введите сумму"
-                    type="text"
-                    inputMode="decimal"
-                    value={amount ? `${amount} ${senderWallet ? mapCurrencyToSymbol(senderWallet.currency) : ""}` : ""}
-                    onChange={(e) => {
+                    placeholder={`Сумма в ${mapCurrencyToSymbol(senderWallet?.currency || "")}`}
+                    value={amount ? `${amount} ${mapCurrencyToSymbol(senderWallet?.currency || "")}` : ""}
+                    onChange={e => {
                         const raw = e.target.value.replace(/[^\d.,]/g, "");
-                        const normalized = raw.replace(",", ".");
-                        if (/^\d*([.]?\d{0,2})?$/.test(normalized)) {
-                            setAmount(normalized);
+                        const norm = raw.replace(",", ".");
+                        if (/^\d*([.]?\d{0,2})?$/.test(norm)) {
+                            setAmount(norm);
                             requestAnimationFrame(() => {
                                 const el = e.target as HTMLInputElement;
-                                const pos = normalized.length;
+                                const pos = norm.length;
                                 el.setSelectionRange(pos, pos);
                             });
                         }
                     }}
-                    style={{ width: "100%", margin: "12px 0" }}
+                    style={{ margin: "12px 0" }}
                 />
 
                 <Button
@@ -280,10 +256,10 @@ export const TransferMethodPage: FC = () => {
                 <Button
                     size="l"
                     stretched
-                    onClick={() => setStep("choose")}
                     style={{ marginTop: 12 }}
+                    onClick={() => setStep("choose")}
                 >
-                    Назад к выбору способа
+                    Назад
                 </Button>
             </List>
         </Page>
