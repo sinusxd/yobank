@@ -19,7 +19,7 @@ import UserService, { User } from "@/api/services/userService";
 import WalletService, { Wallet } from "@/api/services/walletService";
 import TransferService from "@/api/services/transferService";
 import { Page } from "@/components/Page";
-import { useNavigate } from "react-router-dom";
+import {useNavigate, useSearchParams} from "react-router-dom";
 import { mapCurrencyToSymbol } from "@/utils/currency";
 
 type TransferMethod = "email" | "username" | "card";
@@ -69,6 +69,23 @@ export const TransferMethodPage: FC = () => {
     const navigate = useNavigate();
 
     const senderWallet = wallets.find(w => w.id === selectedWalletId);
+
+    const [params] = useSearchParams();
+
+    useEffect(() => {
+        const methodParam = params.get("method") as TransferMethod | null;
+        const targetParam = params.get("target");
+        const amountParam = params.get("amount");
+
+        if (methodParam && targetParam) {
+            setMethod(methodParam);
+            setTarget(targetParam);
+            if (amountParam) {
+                setAmount(amountParam);
+            }
+            setStep("form");
+        }
+    }, []);
 
     useEffect(() => {
         WalletService.getUserWallets().then(res => setWallets(res.data));

@@ -1,11 +1,11 @@
-import {FC, useEffect, useRef, useState} from "react";
-import {Avatar, Badge, Cell, List, Section, Skeleton, Text, Title} from "@telegram-apps/telegram-ui";
+import { FC, useEffect, useRef, useState } from "react";
+import { Avatar, Badge, Cell, List, Section, Skeleton, Text, Title } from "@telegram-apps/telegram-ui";
 import WalletService from "@/api/services/walletService.ts";
-import TransferService, {Transfer} from "@/api/services/transferService.ts";
+import TransferService, { Transfer } from "@/api/services/transferService.ts";
 import dayjs from "dayjs";
-import {useSelector} from "react-redux";
-import {RootState} from "@/store/store.ts";
-import {User} from "@/api/services/userService.ts";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store.ts";
+import { User } from "@/api/services/userService.ts";
 
 interface UserInfo {
     username: string;
@@ -40,7 +40,7 @@ export const TransactionHistory: FC = () => {
 
             setLoading(true);
             try {
-                const {data: wallets} = await WalletService.getUserWallets();
+                const { data: wallets } = await WalletService.getUserWallets();
                 if (wallets.length === 0) {
                     setError("Кошельки пользователя не найдены");
                     return;
@@ -56,6 +56,7 @@ export const TransactionHistory: FC = () => {
                     allTransfers.push(...transfers);
                 }
 
+                allTransfers.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
                 setTransfers(allTransfers);
 
                 const participantIds = new Set<number>();
@@ -64,14 +65,14 @@ export const TransactionHistory: FC = () => {
                     participantIds.add(tx.receiverWalletId);
                 });
 
-                const resolved: Record<number, UserInfo> = {...userInfoMap};
+                const resolved: Record<number, UserInfo> = { ...userInfoMap };
 
                 await Promise.all(
                     Array.from(participantIds).map(async (id) => {
                         if (resolved[id]) return;
 
                         try {
-                            const {username, avatarUrl} = await TransferService.getReceiverUsername(id);
+                            const { username, avatarUrl } = await TransferService.getReceiverUsername(id);
                             resolved[id] = {
                                 username,
                                 avatarUrl: avatarUrl || getStableFallbackAvatar(id),
@@ -99,7 +100,7 @@ export const TransactionHistory: FC = () => {
     if (error) {
         return (
             <Section>
-                <Cell style={{color: "var(--tgui--destructive_text_color)"}}>{error}</Cell>
+                <Cell style={{ color: "var(--tgui--destructive_text_color)" }}>{error}</Cell>
             </Section>
         );
     }
@@ -128,8 +129,8 @@ export const TransactionHistory: FC = () => {
                             return (
                                 <Cell
                                     key={transfer.id}
-                                    before={<Avatar size={48} src={avatarUrl}/>}
-                                    titleBadge={<Badge type="dot"/>}
+                                    before={<Avatar size={48} src={avatarUrl} />}
+                                    titleBadge={<Badge type="dot" />}
                                     subhead={dayjs(transfer.createdAt).format("DD.MM.YYYY HH:mm")}
                                     subtitle={subtitle}
                                     description={
@@ -137,7 +138,6 @@ export const TransactionHistory: FC = () => {
                                             {sign}{(transfer.amount / 100).toFixed(2)} {transfer.currency}
                                         </span>
                                     }
-
                                 >
                                     <Title level="3">Перевод</Title>
                                 </Cell>

@@ -18,7 +18,7 @@ import {InlineButtonsItem} from "@telegram-apps/telegram-ui/dist/components/Bloc
 import {Icon16AddCircle, Icon32SendCircle} from "@vkontakte/icons";
 import {Icon24QR} from "@telegram-apps/telegram-ui/dist/icons/24/qr";
 import {Icon28Close} from "@telegram-apps/telegram-ui/dist/icons/28/close";
-import {initDataState as _initDataState, qrScanner, useSignal} from "@telegram-apps/sdk-react";
+import {initDataState as _initDataState, qrScanner} from "@telegram-apps/sdk-react";
 import WalletService, {Wallet} from "@/api/services/walletService.ts";
 import RateService from "@/api/services/rateService.ts";
 import moneyGif from "./money.gif";
@@ -33,10 +33,11 @@ import {
 import {useNavigate} from "react-router-dom";
 import {ModalHeader} from "@telegram-apps/telegram-ui/dist/components/Overlays/Modal/components/ModalHeader/ModalHeader";
 import {ModalClose} from "@telegram-apps/telegram-ui/dist/components/Overlays/Modal/components/ModalClose/ModalClose";
+import {useSelector} from "react-redux";
+import {RootState} from "@/store/store.ts";
 
 export const Money: FC = () => {
-    const initDataState = useSignal(_initDataState);
-    const user = initDataState?.user;
+    const userFromRedux = useSelector((state: RootState) => state.user);
     const [wallets, setWallets] = useState<Wallet[] | null>(null);
     const [rates, setRates] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(false);
@@ -72,10 +73,37 @@ export const Money: FC = () => {
 
     const openQr = async () => {
         if (qrScanner.open.isAvailable()) {
-            const res = await qrScanner.open({text: 'Scan any QR'});
-            console.log(res);
+            const res = await qrScanner.open({ text: 'Сканируйте QR-код для перевода' });
+            const data = res;
+
+            if (data && typeof data === "string") {
+                try {
+                    const url = new URL(data);
+
+                    if (url.protocol === "yobank:") {
+                        const method = url.searchParams.get("method");
+                        const target = url.searchParams.get("target");
+                        const amount = url.searchParams.get("amount");
+
+                        const query = new URLSearchParams();
+
+                        if (method) query.set("method", method);
+                        if (target) query.set("target", target);
+                        if (amount) query.set("amount", amount);
+
+                        navigate(`/transfer-money?${query.toString()}`);
+                    } else {
+                        alert("Неверный формат QR-кода");
+                    }
+                } catch {
+                    alert("Не удалось обработать QR-код");
+                }
+            } else {
+                alert("QR-код не содержит данных");
+            }
         }
     };
+
 
     return (
         <List>
@@ -83,7 +111,7 @@ export const Money: FC = () => {
                 before={
                     <Avatar
                         alt="Telegram logo"
-                        src={user?.photo_url || `https://avatars.githubusercontent.com/u/${10 % 1000000}?v=4`}
+                        src={userFromRedux?.avatarUrl || `https://avatars.githubusercontent.com/u/${10 % 1000000}?v=4`}
                     />
                 }
             />
