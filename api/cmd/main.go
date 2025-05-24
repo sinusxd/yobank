@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"time"
@@ -23,7 +24,7 @@ func main() {
 	go telegram.StartBot(env.TelegramBotToken, env.TelegramWebAppUrl)
 	go app.Container.Services.Rate.StartScheduler()
 
-	brokers := []string{"broker:9092"}
+	brokers := []string{fmt.Sprintf("%s:%d", env.KafkaHost, env.KafkaPort)}
 	topic := "transfer_notifications"
 	groupID := "notification-workers"
 
