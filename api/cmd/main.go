@@ -23,7 +23,7 @@ func main() {
 	go telegram.StartBot(env.TelegramBotToken, env.TelegramWebAppUrl)
 	go app.Container.Services.Rate.StartScheduler()
 
-	brokers := []string{"localhost:9092"}
+	brokers := []string{"broker:9092"}
 	topic := "transfer_notifications"
 	groupID := "notification-workers"
 
