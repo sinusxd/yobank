@@ -1,6 +1,5 @@
 import type {ComponentType, JSX} from 'react';
 
-import {IndexPage} from '@/pages/IndexPage/IndexPage';
 import {InitDataPage} from '@/pages/InitDataPage.tsx';
 import {LaunchParamsPage} from '@/pages/LaunchParamsPage.tsx';
 import {ThemeParamsPage} from '@/pages/ThemeParamsPage.tsx';
@@ -22,7 +21,7 @@ interface Route {
 }
 
 export const routes: Route[] = [
-    {path: '/', Component: IndexPage},
+    {path: '/', Component: LoginPage},
     {path: '/login', Component: LoginPage},
     {path: '/email-login', Component: EmailLoginPage, 'title': 'Login via email'},
     {path: '/telegram-login', Component: TelegramLoginPage, 'title': 'Login via telegram'},
