@@ -25,6 +25,8 @@ type Env struct {
 	SMTPPassword           string `mapstructure:"SMTP_PASSWORD"`
 	TelegramBotToken       string `mapstructure:"TELEGRAM_BOT_TOKEN"`
 	TelegramWebAppUrl      string `mapstructure:"TELEGRAM_WEBAPP_URL"`
+	KafkaHost              string `mapstructure:"KAFKA_HOST"`
+	KafkaPort              int    `mapstructure:"KAFKA_PORT"`
 }
 
 func NewEnv() *Env {

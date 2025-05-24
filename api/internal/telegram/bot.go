@@ -1,9 +1,12 @@
 package telegram
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
+	"yobank/domain"
 )
 
 var BotInstance *tgbotapi.BotAPI
@@ -43,10 +46,10 @@ func StartBot(token string, webAppURL string) {
 	}
 }
 
-func NotifyTransfer(tgID int64, senderUsername string, amount int64, currency string, senderFromTg bool) {
+func NotifyTransfer(tgID int64, senderUsername string, amount int64, currency string, senderFromTg bool) error {
 	if BotInstance == nil {
 		log.Println("Bot not initialized")
-		return
+		return fmt.Errorf("BotInstance is nil")
 	}
 	text := ""
 	if senderFromTg {
@@ -56,9 +59,25 @@ func NotifyTransfer(tgID int64, senderUsername string, amount int64, currency st
 	}
 
 	msg := tgbotapi.NewMessage(tgID, text)
-	if _, err := BotInstance.Send(msg); err != nil {
-		log.Printf("Не удалось отправить уведомление пользователю %d: %v", tgID, err)
+	_, err := BotInstance.Send(msg)
+	return err
+}
+
+func HandleTransferNotificationMessage(ctx context.Context, message []byte) error {
+	var event domain.TransferNotificationEvent
+	if err := json.Unmarshal(message, &event); err != nil {
+		log.Printf("Ошибка при разборе JSON: %v", err)
+		return err
 	}
+
+	return NotifyTransfer(
+		*event.ReceiverTgID,
+		event.SenderUsername,
+		event.Amount,
+		event.Currency,
+		true,
+	)
+
 }
 
 func NotifyTopUp(tgID int64, amount int64, currency string) {

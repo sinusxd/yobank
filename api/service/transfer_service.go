@@ -8,16 +8,16 @@ import (
 	"time"
 	"yobank/domain"
 	"yobank/internal/mailer"
-	"yobank/internal/telegram"
 )
 
 type transferService struct {
-	db               *gorm.DB
-	walletRepository domain.WalletRepository
-	transferRepo     domain.TransferRepository
-	userRepo         domain.UserRepository
-	mailer           *mailer.GoMailer
-	contextTimeout   time.Duration
+	db                   *gorm.DB
+	walletRepository     domain.WalletRepository
+	transferRepo         domain.TransferRepository
+	userRepo             domain.UserRepository
+	mailer               *mailer.GoMailer
+	notificationProducer domain.NotificationProducer
+	contextTimeout       time.Duration
 }
 
 func NewTransferService(
@@ -26,15 +26,17 @@ func NewTransferService(
 	transferRepo domain.TransferRepository,
 	userRepo domain.UserRepository,
 	mailer *mailer.GoMailer,
+	notificationProducer domain.NotificationProducer,
 	timeout time.Duration,
 ) domain.TransferService {
 	return &transferService{
-		db:               db,
-		walletRepository: walletRepo,
-		transferRepo:     transferRepo,
-		userRepo:         userRepo,
-		mailer:           mailer,
-		contextTimeout:   timeout,
+		db:                   db,
+		walletRepository:     walletRepo,
+		transferRepo:         transferRepo,
+		userRepo:             userRepo,
+		notificationProducer: notificationProducer,
+		mailer:               mailer,
+		contextTimeout:       timeout,
 	}
 }
 
@@ -97,7 +99,6 @@ func (s *transferService) MakeTransfer(ctx context.Context, senderWalletID, rece
 	if err == nil {
 		receiverUser, err := s.userRepo.GetByID(ctx, strconv.Itoa(int(receiverWallet.UserID)))
 		if err == nil && receiverUser.Notification {
-			// Получаем отправителя
 			senderWallet, _ := s.walletRepository.GetByID(ctx, transfer.SenderWalletID)
 			senderUser, _ := s.userRepo.GetByID(ctx, strconv.Itoa(int(senderWallet.UserID)))
 
@@ -106,13 +107,21 @@ func (s *transferService) MakeTransfer(ctx context.Context, senderWalletID, rece
 				senderUsername = senderUser.Username
 			}
 
-			if receiverUser.TelegramID != nil {
-				// Telegram-уведомление
-				go telegram.NotifyTransfer(*receiverUser.TelegramID, senderUsername, transfer.Amount, transfer.Currency, senderUser.TelegramID != nil)
-			} else if receiverUser.Email != nil && *receiverUser.Email != "" {
-				// Email-уведомление
-				go s.mailer.SendTransferNotification(*receiverUser.Email, senderUsername, transfer.Amount, transfer.Currency)
+			if (receiverUser.Email != nil && *receiverUser.Email != "") || receiverUser.TelegramID != nil {
+				receiverUser.Email = &receiverUser.Username
 			}
+
+			event := domain.TransferNotificationEvent{
+				ReceiverID:     int(receiverUser.ID),
+				ReceiverEmail:  *receiverUser.Email,
+				ReceiverTgID:   receiverUser.TelegramID,
+				SenderUsername: senderUsername,
+				Amount:         transfer.Amount,
+				Currency:       transfer.Currency,
+				UseTelegram:    receiverUser.TelegramID != nil,
+			}
+
+			go s.notificationProducer.SendTransferNotificationEvent(ctx, event)
 		}
 	}
 

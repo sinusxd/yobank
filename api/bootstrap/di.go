@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"fmt"
 	"gorm.io/gorm"
 	"time"
 
@@ -17,6 +18,7 @@ type Services struct {
 	User      domain.UserService
 	Rate      domain.RateService
 	Transfer  domain.TransferService
+	Mailer    *mailer.GoMailer
 }
 
 type Repositories struct {
@@ -50,13 +52,21 @@ func BuildContainer(db *gorm.DB, cfg *Env) Container {
 		cfg.SMTPPassword,
 	)
 
+	kafkaNotificationProducer, err := service.NewKafkaNotificationProducer(
+		[]string{fmt.Sprintf("%s:%d", cfg.KafkaHost, cfg.KafkaPort)},
+		"transfer_notifications")
+
+	if err != nil {
+		panic(err)
+	}
+
 	// UseCases / Services
 	emailCodeService := service.NewEmailCodeService(emailCodeRepo, mail, timeout)
 	loginService := service.NewLoginService(userRepo, timeout)
 	walletService := service.NewWalletService(walletRepo, userRepo, mail, timeout)
 	userService := service.NewUserService(db, userRepo, walletRepo)
 	rateService := service.NewRateService(rateRepo, timeout)
-	transferService := service.NewTransferService(db, walletRepo, transferRepo, userRepo, mail, timeout)
+	transferService := service.NewTransferService(db, walletRepo, transferRepo, userRepo, mail, kafkaNotificationProducer, timeout)
 
 	return Container{
 		Services: Services{
@@ -66,6 +76,7 @@ func BuildContainer(db *gorm.DB, cfg *Env) Container {
 			User:      userService,
 			Rate:      rateService,
 			Transfer:  transferService,
+			Mailer:    mail,
 		},
 		Repos: Repositories{
 			User:      userRepo,

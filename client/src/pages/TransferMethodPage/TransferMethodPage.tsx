@@ -71,7 +71,6 @@ export const TransferMethodPage: FC = () => {
 
     const senderWallet = wallets.find(w => w.id === selectedWalletId);
 
-    // 1) Разбор QR-параметров
     useEffect(() => {
         const m = params.get("method") as TransferMethod | null;
         const t = params.get("target");
@@ -84,12 +83,10 @@ export const TransferMethodPage: FC = () => {
         }
     }, []);
 
-    // 2) Загрузка своих кошельков
     useEffect(() => {
         WalletService.getUserWallets().then(res => setWallets(res.data));
     }, []);
 
-    // 3) При переходе в форму и наличии target грузим получателя
     useEffect(() => {
         if (step !== "form" || target.length < 3) {
             setReceiver(null);
@@ -97,17 +94,35 @@ export const TransferMethodPage: FC = () => {
             setReceiverWalletId(null);
             return;
         }
+
         setLoading(true);
-        UserService.getByWalletNumber(target)
+
+        let userPromise: Promise<User>;
+        switch (method) {
+            case "email":
+                userPromise = UserService.getByEmail(target);
+                break;
+            case "username":
+                userPromise = UserService.getByUsername(target);
+                break;
+            case "card":
+                userPromise = UserService.getByWalletNumber(target);
+                break;
+            default:
+                userPromise = Promise.reject("Неверный метод");
+        }
+
+        userPromise
             .then(user => {
                 setReceiver(user);
                 return WalletService.getWalletsByUserId(user.id);
             })
             .then(wds => {
                 setReceiverWallets(wds);
-                // автоматический выбор кошелька получателя по номеру
-                const byNum = wds.find(w => w.number === target);
-                setReceiverWalletId(byNum ? byNum.id : null);
+                if (method === "card") {
+                    const byNum = wds.find(w => w.number === target);
+                    setReceiverWalletId(byNum ? byNum.id : null);
+                }
             })
             .catch(() => {
                 setReceiver(null);
@@ -115,9 +130,8 @@ export const TransferMethodPage: FC = () => {
                 setReceiverWalletId(null);
             })
             .finally(() => setLoading(false));
-    }, [step, target]);
+    }, [step, target, method]);
 
-    // 4) Автовыбор счёта отправителя по валюте выбранного кошелька получателя
     useEffect(() => {
         if (!receiverWalletId || wallets.length === 0) return;
         const recv = receiverWallets.find(w => w.id === receiverWalletId);

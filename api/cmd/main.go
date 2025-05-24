@@ -1,18 +1,18 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
+	"log"
 	"time"
 	"yobank/api/route"
-	"yobank/internal/telegram"
-
-	"github.com/gin-gonic/gin"
 	"yobank/bootstrap"
+	"yobank/internal/telegram"
+	"yobank/service"
 )
 
 func main() {
 	app := bootstrap.App()
 	env := app.Env
-
 	defer app.CloseDBConnection()
 
 	timeout := time.Duration(env.ContextTimeout) * time.Second
@@ -23,5 +23,25 @@ func main() {
 	go telegram.StartBot(env.TelegramBotToken, env.TelegramWebAppUrl)
 	go app.Container.Services.Rate.StartScheduler()
 
-	gin.Run(env.ServerAddress)
+	brokers := []string{"localhost:9092"}
+	topic := "transfer_notifications"
+	groupID := "notification-workers"
+
+	errChan := make(chan error, 1)
+
+	go func() {
+		if err := service.StartKafkaConsumer(app.Container.Services.Mailer, brokers, topic, groupID); err != nil {
+			errChan <- err
+		}
+	}()
+
+	go func() {
+		if err := gin.Run(env.ServerAddress); err != nil {
+			errChan <- err
+		}
+	}()
+
+	if err := <-errChan; err != nil {
+		log.Fatalf("Приложение аварийно завершено: %v", err)
+	}
 }
