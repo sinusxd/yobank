@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/IBM/sarama"
 	"time"
 	"yobank/domain"
@@ -34,6 +35,7 @@ func NewKafkaNotificationProducer(brokers []string, topic string) (domain.Notifi
 func (k *kafkaNotificationProducer) SendTransferNotificationEvent(ctx context.Context, event domain.TransferNotificationEvent) error {
 	data, err := json.Marshal(event)
 	if err != nil {
+		fmt.Println("Ошибка при сериализации события:", err)
 		return err
 	}
 
@@ -43,5 +45,6 @@ func (k *kafkaNotificationProducer) SendTransferNotificationEvent(ctx context.Co
 	}
 
 	_, _, err = k.producer.SendMessage(msg)
+	fmt.Println("Ошибка при отправке сообщения:", err)
 	return err
 }

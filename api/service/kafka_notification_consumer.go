@@ -51,7 +51,7 @@ func (c NotificationConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, 
 
 func (c NotificationConsumer) tryNotify(event domain.TransferNotificationEvent) error {
 	if event.UseTelegram {
-		return telegram.NotifyTransfer(*event.ReceiverTgID, event.SenderUsername, event.Amount, event.Currency, true)
+		return telegram.NotifyTransfer(*event.ReceiverTgID, event.SenderUsername, event.Amount, event.Currency, event.UseTelegram)
 	} else {
 		return c.mailer.SendTransferNotification(event.ReceiverEmail, event.SenderUsername, event.Amount, event.Currency)
 	}
